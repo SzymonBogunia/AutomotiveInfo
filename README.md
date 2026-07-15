@@ -22,6 +22,8 @@ Otwórz SQL Server Management Studio i stwórz nową, całkowicie pustą bazę d
 ### 2. Plik konfiguracyjny appsettings.json
 Upewnij się, że w pliku appsettings.json na poziomie katalogu głównego projektu znajduje się poprawna konfiguracja połączenia oraz dane administratora (szczególnie właściwy Connection String dla Twojego lokalnego serwera SQL). Dane administratora są automatycznie wstrzykiwane do tabeli umbracoUser przy pierwszym starcie projektu.
 
+---
+
 ## Instrukcja uruchomienia
 Aby zbudować i uruchomić projekt lokalnie, wykonaj poniższe komendy w głównym katalogu projektu:
 
@@ -39,6 +41,8 @@ Zaloguj się do panelu administracyjnego (Backoffice), używając skonfigurowany
 E-mail: automotive@admin
 
 Hasło: ciezkiehaslo
+
+---
 
 ### Wersjonowanie struktury (uSync)
 Wszystkie zmiany w strukturze danych (Typy Dokumentów, Typy Danych, Szablony) są automatycznie rejestrowane i zapisywane do plików tekstowych w folderze /uSync/ na poziomie głównym projektu.
