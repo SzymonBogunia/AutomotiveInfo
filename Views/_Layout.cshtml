@@ -1,0 +1,90 @@
+﻿@using Umbraco.Cms.Web.Common.PublishedModels;
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@using Umbraco.Extensions
+@using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
+
+@{
+    // wrapper
+    var globalSettings = Model.AncestorOrSelf<ContentModels.WebsiteContainer>();
+
+    //home page
+    var homePage = globalSettings?.FirstChild<ContentModels.FrontPage>();
+
+    //url angielski/polski
+    var homePageUrl = homePage?.Url() ?? "/";
+
+    // dane z wrappera
+    var logo = globalSettings?.Logo;
+    var navigationLinks = globalSettings?.NavLinks;
+    var footerLinks = globalSettings?.FooterLinks;
+    var copyrightText = globalSettings?.CopyrightText;
+}
+
+<!DOCTYPE html>
+<html lang="@Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.Title - AutomotiveInfo</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 flex flex-col min-h-screen">
+
+    <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+
+            <a href="@homePageUrl" class="flex items-center space-x-2 text-xl font-black tracking-tight text-white hover:text-red-500 transition-colors">
+                @if (logo != null)
+                {
+                    <img src="@logo.Url()" alt="Logo" class="h-8 w-auto object-contain" />
+                }
+                else
+                {
+                    <span>🚗</span>
+                    <span>AUTOMOTIVE<span class="text-red-500">INFO</span></span>
+                }
+            </a>
+
+            <nav class="flex items-center space-x-8 text-sm font-medium text-slate-300">
+                @if (navigationLinks != null)
+                {
+                    foreach (var link in navigationLinks)
+                    {
+                        <a href="@link.Url" target="@link.Target" class="hover:text-white transition-colors">@link.Name</a>
+                    }
+                }
+                else
+                {
+                    <a href="/" class="hover:text-white transition-colors">Start</a>
+                    <a href="/aktualnosci" class="hover:text-white transition-colors">Aktualności</a>
+                }
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        @RenderBody()
+    </main>
+
+    <footer class="border-t border-slate-800 bg-slate-950 text-slate-400 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+
+            <div class="text-sm">
+                &copy; @DateTime.Now.Year @copyrightText
+            </div>
+
+            <div class="flex space-x-6 text-sm">
+                @if (footerLinks != null && footerLinks.Any())
+                {
+                    foreach (var link in footerLinks)
+                    {
+                        <a href="@link.Url" target="@link.Target" class="hover:text-slate-200 transition-colors">@link.Name</a>
+                    }
+                }
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

@@ -1,6 +1,47 @@
 ﻿@using Umbraco.Cms.Web.Common.PublishedModels;
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<ContentModels.ContentPage>
 @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
+@using Umbraco.Extensions
+
 @{
-	Layout = null;
+    Layout = "_Layout.cshtml";
+    ViewBag.Title = Model.Heading ?? "Strona Informacyjna";
 }
+
+<section class="py-16 md:py-24 border-b border-slate-800 bg-slate-950/40">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-6">
+            @Model.Heading
+        </h1>
+
+        @if (!string.IsNullOrEmpty(Model.Lead))
+        {
+            <p class="text-lg md:text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto">
+                @Model.Lead
+            </p>
+        }
+    </div>
+</section>
+
+<section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+    @if (Model.Components != null && Model.Components.Any())
+    {
+        <div class="space-y-16">
+            @Html.GetBlockListHtml(Model.Components)
+        </div>
+    }
+    else
+    {
+        <div class="border border-dashed border-slate-800 rounded-2xl p-12 text-center bg-slate-950/20 my-8">
+            <div class="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center mx-auto mb-4 text-slate-400">
+                🧱
+            </div>
+            <h3 class="text-base font-semibold text-white mb-1">Brak komponentów</h3>
+            <p class="text-slate-500 max-w-xs mx-auto text-xs">
+                Ta strona korzysta z pola <code class="bg-slate-900 px-1 py-0.5 rounded text-red-400">components</code>. Przejdź do edycji tej strony w panelu CMS, aby dodać pierwsze bloki treści.
+            </p>
+        </div>
+    }
+
+</section>
