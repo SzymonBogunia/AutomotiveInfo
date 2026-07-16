@@ -1,0 +1,40 @@
+﻿@using Umbraco.Cms.Web.Common.PublishedModels;
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>
+@using Umbraco.Extensions
+
+@{
+    // Sprawdzenie ukrycia komponentu
+    var hide = Model.Settings?.Value<bool>("hideBlockElement") ?? false;
+    if (hide) { return; }
+
+    // 1. Pobranie tekstów i tła
+    var header = Model.Content.Value<string>("header");
+    var lead = Model.Content.Value<string>("lead");
+    var bgColor = Model.Content.Value<string>("backgroundColor") ?? "bg-slate-900";
+
+    // 2. Pobranie pierwszego linku z kolekcji
+    var link = Model.Content.Value<IEnumerable<Umbraco.Cms.Core.Models.Link>>("link")?.FirstOrDefault();
+}
+
+<div class="p-8 md:p-12 rounded-2xl border border-slate-800/80 @bgColor my-8 shadow-2xl">
+    <div class="max-w-2xl">
+        @if (!string.IsNullOrEmpty(header))
+        {
+            <h3 class="text-2xl md:text-3xl font-bold text-white mb-3">@header</h3>
+        }
+
+        @if (!string.IsNullOrEmpty(lead))
+        {
+            <p class="text-slate-300 mb-6 leading-relaxed">@lead</p>
+        }
+
+        @if (link != null)
+        {
+            <a href="@link.Url"
+               target="@(!string.IsNullOrEmpty(link.Target) ? link.Target : "_self")"
+               class="inline-flex items-center justify-center px-5 py-3 text-sm font-semibold rounded-lg bg-red-600 hover:bg-red-500 text-white transition-all hover:scale-[1.02]">
+                @(string.IsNullOrEmpty(link.Name) ? "Kliknij tutaj" : link.Name)
+            </a>
+        }
+    </div>
+</div>

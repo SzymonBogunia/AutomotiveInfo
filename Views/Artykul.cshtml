@@ -1,6 +1,79 @@
 ﻿@using Umbraco.Cms.Web.Common.PublishedModels;
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<ContentModels.NewsPage>
 @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
+@using Umbraco.Extensions
+
 @{
-	Layout = null;
+    Layout = "_Layout.cshtml";
+
+    // Pobranie autora (Content Picker)
+    var authorNode = Model.Value<IPublishedContent>("author");
+
+    // Zmienna, do której zapiszemy ostateczny tekst do wyświetlenia
+    string authorDisplayName = string.Empty;
+
+    //pobrane tagu i nazwy
+    string tagNode = Model.Value<IPublishedContent>("tag")?.Value<string>("tagName");
+
+    // Pobranie zdjęcia głównego (Media Picker z limitem 1)
+    var mainImage = Model.Value<IPublishedContent>("mainImage");
+
+    if (authorNode != null)
+    {
+        var firstName = authorNode.Value<string>("firstName");
+        var lastName = authorNode.Value<string>("secondName");
+
+        if (!string.IsNullOrEmpty(firstName) || !string.IsNullOrEmpty(lastName))
+        {
+            // Jeśli pola są wypełnione, łączymy je w "Imię Nazwisko"
+            authorDisplayName = $"{firstName} {lastName}".Trim();
+        }
+        else
+        {
+            // Jeśli pola byłyby puste, w ramach zabezpieczenia używamy nazwy węzła z drzewa
+            authorDisplayName = authorNode.Name;
+        }
+    }
 }
+
+<article class="container mx-auto px-4 py-12 max-w-4xl">
+    <div class="flex flex-wrap items-center gap-4 text-sm text-slate-400 mb-4">
+        @if (Model.PublishDate != default)
+        {
+            <time datetime="@Model.PublishDate.ToString("yyyy-MM-dd")">
+                📅 @Model.PublishDate.ToString("dd.MM.yyyy")
+            </time>
+        }
+
+        @if (authorNode != null)
+        {
+            <span class="font-medium text-slate-300">✍️ @authorDisplayName</span>
+        }
+
+        @if (tagNode != null)
+        {
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+                #@tagNode
+            </span>
+        }
+    </div>
+
+    <h1 class="text-3xl md:text-5xl font-extrabold text-white mb-8 leading-tight">
+        @(string.IsNullOrEmpty(Model.ArticleTitle) ? Model.Name : Model.ArticleTitle)
+    </h1>
+
+    @if (mainImage != null)
+    {
+        <div class="mb-12 overflow-hidden rounded-3xl border border-slate-800/80 shadow-2xl">
+            <img src="@mainImage.Url()" alt="Zdjęcie główne artykułu" class="w-full h-auto max-h-[500px] object-cover" />
+        </div>
+    }
+
+    @* --- KLUCZOWE DODANIE: Renderowanie komponentów (np. tekstu, akordeonu itp.) --- *@
+    @if (Model.Components != null && Model.Components.Any())
+    {
+        <div class="space-y-12 border-t border-slate-800/60 pt-12">
+            @Html.GetBlockListHtml(Model.Components)
+        </div>
+    }
+</article>
