@@ -26,9 +26,15 @@ Desktop.ini
 umbraco/config/cache/
 umbraco/config/create/
 
+# ModelsBuilder – znacznik nieaktualnych modeli (transient, generowany w runtime)
+/umbraco/models/*.flag
+
 # === uSync ===
 # pliki tymczasowe uSync
 uSync/Temp/
 
 # === User secrets / local configuration ===
 appsettings.Development.json
+
+# Local MCP config – holds the Umbraco API secret, must never be committed
+.mcp.json
