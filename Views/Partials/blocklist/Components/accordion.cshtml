@@ -1,16 +1,16 @@
 ﻿@using Umbraco.Cms.Web.Common.PublishedModels;
-@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem<ContentModels.Accordion, ContentModels.BlockSettings>>
 @using Umbraco.Extensions
-@using Umbraco.Cms.Core.Strings
+@using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
 
 @{
-    if (Model.Settings?.Value<bool>("hideBlockElement") ?? false) { return; }
+    if (Model.Settings?.HideBlockElement ?? false) { return; }
 
-    // Pobieramy tytuł całej sekcji akordeonu (np. "Najczęściej zadawane pytania")
-    var title = Model.Content.Value<string>("title");
+    // caly tytul
 
-    // Pobieramy wewnętrzną Block Listę z elementami (pytaniami)
-    var items = Model.Content.Value<Umbraco.Cms.Core.Models.Blocks.BlockListModel>("items");
+    // elementy
+    var title = Model.Content.Title;
+    var items = Model.Content.Items;
 }
 
 <div class="my-16 max-w-4xl mx-auto">
@@ -27,8 +27,12 @@
             @foreach (var item in items)
             {
                 // Wyciągamy dane z pojedynczego elementu (accordionBlock)
-                var heading = item.Content.Value<string>("heading");
-                var content = item.Content.Value<IHtmlEncodedString>("content");
+                var accordionBlock = item.Content as ContentModels.AccordionBlock;
+                if (accordionBlock == null) { continue; }
+
+                // Teraz masz pełne podpowiadanie kodu dla pól wiersza:
+                var heading = accordionBlock.Heading;
+                var content = accordionBlock.Content;
 
                 if (!string.IsNullOrEmpty(heading))
                 {

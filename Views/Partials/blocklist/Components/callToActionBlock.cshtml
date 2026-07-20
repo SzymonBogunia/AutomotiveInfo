@@ -1,19 +1,24 @@
 ﻿@using Umbraco.Cms.Web.Common.PublishedModels;
-@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem<ContentModels.CallToActionBlock, ContentModels.BlockSettings>>
 @using Umbraco.Extensions
+@using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
 
 @{
     // Sprawdzenie ukrycia komponentu
-    var hide = Model.Settings?.Value<bool>("hideBlockElement") ?? false;
-    if (hide) { return; }
+    // SILNE TYPOWANIE USTAWIEŃ: Rzutujemy bezpiecznie za pomocą operatora 'as'
+    var settings = Model.Settings as ContentModels.BlockSettings;
+
+    // Jeśli rzutowanie przejdzie pomyślnie, sprawdzamy naszą flagę ukrycia
+    if (settings?.HideBlockElement ?? false) { return; }
 
     // 1. Pobranie tekstów i tła
-    var header = Model.Content.Value<string>("header");
-    var lead = Model.Content.Value<string>("lead");
-    var bgColor = Model.Content.Value<string>("backgroundColor") ?? "bg-slate-900";
+    var header = Model.Content.Header;
+    var lead = Model.Content.Lead;
+
+    var bgColor = Model.Content.BgColor;
 
     // 2. Pobranie pierwszego linku z kolekcji
-    var link = Model.Content.Value<IEnumerable<Umbraco.Cms.Core.Models.Link>>("link")?.FirstOrDefault();
+    var link = Model.Content.Link?.FirstOrDefault();
 }
 
 <div class="p-8 md:p-12 rounded-2xl border border-slate-800/80 @bgColor my-8 shadow-2xl">

@@ -22,8 +22,9 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             @foreach (var article in articles)
             {
-                var mainImage = article.Value<IPublishedContent>("mainImage");
-                var tagNode = article.Value<IPublishedContent>("tag").Value<string>("tagName");
+                var mainImage = article.MainImage;
+                var tagNode = article.Tag as ContentModels.Tag;
+                string tagText = tagNode?.TagName;
 
                 <a href="@article.Url()" class="group bg-slate-900 border border-slate-800/60 rounded-2xl overflow-hidden hover:border-slate-700 transition-all duration-300 hover:scale-[1.01] flex flex-col h-full shadow-lg">
                     <div class="aspect-video w-full overflow-hidden bg-slate-950 relative">
@@ -36,10 +37,10 @@
                             <div class="w-full h-full flex items-center justify-center text-slate-700">🖼️ Brak zdjęcia</div>
                         }
 
-                        @if (tagNode != null)
+                        @if (!string.IsNullOrEmpty(tagText))
                         {
                             <span class="absolute top-4 left-4 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-950/80 backdrop-blur-md text-red-400 border border-slate-800">
-                                #@tagNode
+                                #@tagText
                             </span>
                         }
                     </div>

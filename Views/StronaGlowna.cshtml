@@ -7,6 +7,7 @@
     Layout = "_Layout.cshtml";
     // Pobranie zdjęcia z Media Pickera 3 bezpieczną metodą
     var heroImageUrl = Model.HeroImage?.Url() ?? "https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1920&q=80";
+    var firstCta = Model.HeroCta?.FirstOrDefault();
 }
 
 <section class="relative bg-slate-950 py-24 md:py-32 overflow-hidden">
@@ -27,8 +28,7 @@
 
             @if (Model.HeroCta != null && Model.HeroCta.Any())
             {
-                // Pobieramy pierwszy link z kolekcji
-                var firstCta = Model.HeroCta.FirstOrDefault();
+                
                 if (firstCta != null)
                 {
                     <div>

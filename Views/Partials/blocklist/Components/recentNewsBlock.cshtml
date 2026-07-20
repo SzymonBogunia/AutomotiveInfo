@@ -1,18 +1,20 @@
 ﻿@using Umbraco.Cms.Web.Common.PublishedModels;
-@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem<ContentModels.RecentNewsBlock, ContentModels.BlockSettings>>
 @using Umbraco.Extensions
+@using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
 
 @{
-    if (Model.Settings?.Value<bool>("hideBlockElement") ?? false) { return; }
+    if (Model.Settings?.HideBlockElement ?? false) { return; }
 
-    var blockTitle = Model.Content.Value<string>("blockTitle");
-    var source = Model.Content.Value<IPublishedContent>("source");
-    var filterTag = Model.Content.Value<Tag>("tagFilter");
+    var blockTitle = Model.Content.BlockTitle;
+    var source = Model.Content.Source;
+    var filterTag = Model.Content.TagFilter as ContentModels.Tag;
 
-    // Jedno, zwięzłe zapytanie LINQ obsługujące filtrowanie, sortowanie i limit 3 artykułów
-    var finalArticles = (source?.Children() ?? Enumerable.Empty<IPublishedContent>())
-        .Where(x => filterTag == null || x.Value<Tag>("tag")?.Id == filterTag.Id)
-        .OrderByDescending(x => x.Value<DateTime>("publishDate") != default ? x.Value<DateTime>("publishDate") : x.CreateDate)
+    // Pobieranie artykułów z silnym typowaniem
+    var finalArticles = (source?.Children() ?? Enumerable.Empty<Umbraco.Cms.Core.Models.PublishedContent.IPublishedContent>())
+        .OfType<ContentModels.NewsPage>()
+        .Where(x => filterTag == null || (x.Tag != null && x.Tag.Id == filterTag.Id)) 
+        .OrderByDescending(x => x.PublishDate != default ? x.PublishDate : x.CreateDate)
         .Take(3)
         .ToList();
 }
@@ -34,10 +36,10 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             @foreach (var article in finalArticles)
             {
-                var mainImage = article.Value<IPublishedContent>("mainImage");
-                var tagNode = article.Value<IPublishedContent>("tag").Value<string>("tagName");
-                var publishDate = article.Value<DateTime>("publishDate");
-                var articleTitle = article.Value<string>("articleTitle") ?? article.Name;
+                var mainImage = article.MainImage;
+                var tagNode = article.Tag as ContentModels.Tag;
+                var publishDate = article.PublishDate;
+                var articleTitle = article.ArticleTitle;
 
                 <a href="@article.Url()" class="group bg-slate-900 border border-slate-800/60 rounded-2xl overflow-hidden hover:border-slate-700 transition-all hover:scale-[1.01] flex flex-col h-full shadow-lg">
                     <div class="aspect-video w-full overflow-hidden bg-slate-950 relative">
@@ -48,7 +50,7 @@
                         @if (tagNode != null)
                         {
                             <span class="absolute top-3 left-3 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-950/80 backdrop-blur-md text-red-400 border border-slate-800">
-                                #@tagNode
+                                #@tagNode.TagName
                             </span>
                         }
                     </div>

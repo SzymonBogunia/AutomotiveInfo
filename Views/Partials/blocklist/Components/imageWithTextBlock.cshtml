@@ -1,32 +1,25 @@
 ﻿@using Umbraco.Cms.Web.Common.PublishedModels;
-@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem<ContentModels.ImageWithTextBlock, ContentModels.BlockSettings>>
 @using Umbraco.Extensions
+@using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
 
 @{
-    // Sprawdzenie czy ukryć komponent
-    var hide = Model.Settings?.Value<bool>("hideBlockElement") ?? false;
-    if (hide)
-    {
-        return;
-    }
+    if (Model.Settings?.HideBlockElement ?? false) { return; }
 
-    // 1. Pobranie danych z pól
-    var textValue = Model.Content.Value("text")?.ToString();
-    var image = Model.Content.Value<IPublishedContent>("image");
+    var textValue = Model.Content.Text; 
+    var image = Model.Content.Image;   
+    var position = Model.Content.ImagePosition ?? "Lewo";
 
-    // 2. Pobranie pozycji (np. "Lewo", "Centruj", "Prawo"). Jeśli puste, domyślnie ustawiamy "Lewo"
-    var position = Model.Content.Value<string>("imagePosition") ?? "Lewo";
-
-    // 3. Dynamiczne dopasowanie układu Flexbox na podstawie wybranej opcji
+    // flexbox po opcji
     var layoutClass = "md:flex-row"; // Domyślnie zdjęcie po lewej, tekst po prawej
 
     if (position == "Prawo")
     {
-        layoutClass = "md:flex-row-reverse"; // Odwracamy kolejność (zdjęcie po prawej)
+        layoutClass = "md:flex-row-reverse"; // zdjecie prawo
     }
     else if (position == "Centruj")
     {
-        layoutClass = "flex-col text-center"; // Układ pionowy z wyśrodkowaniem tekstu
+        layoutClass = "flex-col text-center"; // srodek
     }
 }
 
@@ -34,7 +27,7 @@
 
     @if (image != null)
     {
-        // Jeśli wybrano "Centruj", możemy nieco ograniczyć maksymalną szerokość zdjęcia, by ładnie wyglądało w pionie
+        // dla centruj ograniczenie maksymalnej szerokość zdjęcia, by ładnie wyglądało w pionie
         var imageSizeClass = position == "Centruj" ? "max-w-2xl w-full" : "w-full md:w-1/2";
 
         <div class="@imageSizeClass">
@@ -42,12 +35,12 @@
         </div>
     }
 
-    @if (!string.IsNullOrEmpty(textValue))
+    @if (textValue != null && !string.IsNullOrEmpty(textValue.ToString()))
     {
         var textSizeClass = position == "Centruj" ? "w-full" : "w-full md:w-1/2";
 
         <div class="@textSizeClass prose prose-invert max-w-none text-white">
-            @Html.Raw(textValue)
+            @textValue
         </div>
     }
 </div>

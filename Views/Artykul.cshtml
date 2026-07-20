@@ -6,34 +6,11 @@
 @{
     Layout = "_Layout.cshtml";
 
-    // Pobranie autora (Content Picker)
-    var authorNode = Model.Value<IPublishedContent>("author");
+    var authorNode = Model.Author as ContentModels.Author;
 
-    // Zmienna, do której zapiszemy ostateczny tekst do wyświetlenia
-    string authorDisplayName = string.Empty;
+    var tagNode = Model.Tag as ContentModels.Tag;
 
-    //pobrane tagu i nazwy
-    string tagNode = Model.Value<IPublishedContent>("tag")?.Value<string>("tagName");
-
-    // Pobranie zdjęcia głównego (Media Picker z limitem 1)
-    var mainImage = Model.Value<IPublishedContent>("mainImage");
-
-    if (authorNode != null)
-    {
-        var firstName = authorNode.Value<string>("firstName");
-        var lastName = authorNode.Value<string>("secondName");
-
-        if (!string.IsNullOrEmpty(firstName) || !string.IsNullOrEmpty(lastName))
-        {
-            // Jeśli pola są wypełnione, łączymy je w "Imię Nazwisko"
-            authorDisplayName = $"{firstName} {lastName}".Trim();
-        }
-        else
-        {
-            // Jeśli pola byłyby puste, w ramach zabezpieczenia używamy nazwy węzła z drzewa
-            authorDisplayName = authorNode.Name;
-        }
-    }
+    var mainImage = Model.MainImage;
 }
 
 <article class="container mx-auto px-4 py-12 max-w-4xl">
@@ -47,15 +24,12 @@
 
         @if (authorNode != null)
         {
-            <span class="font-medium text-slate-300">✍️ @authorDisplayName</span>
+            <span class="font-medium text-slate-300">✍️ @authorNode.FirstName @authorNode.SecondName</span>
         }
 
-        @if (tagNode != null)
-        {
             <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
-                #@tagNode
-            </span>
-        }
+                #@tagNode.TagName
+
     </div>
 
     <h1 class="text-3xl md:text-5xl font-extrabold text-white mb-8 leading-tight">
@@ -65,11 +39,11 @@
     @if (mainImage != null)
     {
         <div class="mb-12 overflow-hidden rounded-3xl border border-slate-800/80 shadow-2xl">
+            @* Wywołanie .Url() na silnie typowanym obiekcie mediów *@
             <img src="@mainImage.Url()" alt="Zdjęcie główne artykułu" class="w-full h-auto max-h-[500px] object-cover" />
         </div>
     }
 
-    @* --- KLUCZOWE DODANIE: Renderowanie komponentów (np. tekstu, akordeonu itp.) --- *@
     @if (Model.Components != null && Model.Components.Any())
     {
         <div class="space-y-12 border-t border-slate-800/60 pt-12">

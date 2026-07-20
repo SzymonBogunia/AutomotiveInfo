@@ -1,13 +1,13 @@
 ﻿@using Umbraco.Cms.Web.Common.PublishedModels;
-@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem<ContentModels.RichTextBlock, ContentModels.BlockSettings>>
 @using Umbraco.Extensions
-@using Umbraco.Cms.Core.Strings @* Dodane dla IHtmlEncodedString *@
+@using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
 
 @{
-    if (Model.Settings?.Value<bool>("hideBlockElement") ?? false) { return; }
+    if (Model.Settings?.HideBlockElement ?? false) { return; }
 
-    // Pobieramy jako bezpieczny IHtmlEncodedString
-    var textContent = Model.Content.Value<IHtmlEncodedString>("componentText");
+    var textContent = Model.Content.ComponentText;
+}
 }
 
 @if (textContent != null && !string.IsNullOrEmpty(textContent.ToString()))
