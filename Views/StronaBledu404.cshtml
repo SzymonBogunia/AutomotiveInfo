@@ -1,6 +1,52 @@
-﻿@using Umbraco.Cms.Web.Common.PublishedModels;
+@using Umbraco.Cms.Web.Common.PublishedModels;
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<ContentModels.Error404Page>
 @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
+@using Umbraco.Extensions
 @{
-	Layout = null;
+    // Samodzielny szablon 404 – renderuje się niezależnie od stanu drzewa treści/routingu.
+    Layout = null;
+
+    var heading = string.IsNullOrWhiteSpace(Model.Heading) ? "Nie znaleziono strony" : Model.Heading;
+    var lead = string.IsNullOrWhiteSpace(Model.Lead)
+        ? "Strona, której szukasz, nie istnieje lub została przeniesiona."
+        : Model.Lead;
+
+    var homeLink = Model.Link?.FirstOrDefault();
+    var homeUrl = string.IsNullOrWhiteSpace(homeLink?.Url) ? "/" : homeLink!.Url;
+    var homeText = string.IsNullOrWhiteSpace(homeLink?.Name) ? "Wróć na stronę główną" : homeLink!.Name;
 }
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>404 — @heading</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            background: #0f172a; color: #e2e8f0; padding: 24px;
+            font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+        }
+        .card { max-width: 520px; text-align: center; }
+        .code { font-size: clamp(72px, 18vw, 140px); font-weight: 800; line-height: 1; letter-spacing: -.05em; color: #ef4444; margin: 0; }
+        h1 { font-size: clamp(22px, 4vw, 30px); font-weight: 700; margin: 8px 0 12px; }
+        p { color: #94a3b8; font-size: 16px; line-height: 1.6; margin: 0 0 28px; }
+        a.btn {
+            display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 10px;
+            background: #dc2626; color: #fff; text-decoration: none; font-weight: 600; transition: background .2s;
+        }
+        a.btn:hover { background: #ef4444; }
+        a.btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <p class="code">404</p>
+        <h1>@heading</h1>
+        <p>@lead</p>
+        <a class="btn" href="@homeUrl">🚗 @homeText</a>
+    </main>
+</body>
+</html>
