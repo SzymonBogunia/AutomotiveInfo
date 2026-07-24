@@ -15,7 +15,7 @@
     var header = Model.Content.Header;
     var lead = Model.Content.Lead;
 
-    var bgColor = Model.Content.BgColor;
+    var bgColor = Model.Content.BgColor?.Label ?? "bg-slate-900";
 
     // 2. Pobranie pierwszego linku z kolekcji
     var link = Model.Content.Link?.FirstOrDefault();
