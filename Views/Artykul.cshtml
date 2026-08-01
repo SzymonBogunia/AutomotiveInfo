@@ -2,6 +2,7 @@
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<ContentModels.NewsPage>
 @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
 @using Umbraco.Extensions
+@using Umbraco.Cms.Core.Models
 
 @{
     Layout = "_Layout.cshtml";
@@ -10,8 +11,10 @@
 
     var tagNode = Model.Tag as ContentModels.Tag;
 
-    var mainImage = Model.MainImage;
+    var mainImage = Model.MainImage as MediaWithCrops;
 }
+
+
 
 <article class="container mx-auto px-4 py-12 max-w-4xl">
     <div class="flex flex-wrap items-center gap-4 text-sm text-slate-400 mb-4">
@@ -39,14 +42,30 @@
         @(string.IsNullOrEmpty(Model.ArticleTitle) ? Model.Name : Model.ArticleTitle)
     </h1>
 
+
     @if (mainImage != null)
     {
         <div class="mb-12 overflow-hidden rounded-3xl border border-slate-800/80 shadow-2xl">
-            @* Wywołanie .Url() na silnie typowanym obiekcie mediów *@
-            <img src="@mainImage.Url()" alt="Zdjęcie główne artykułu" class="w-full h-auto max-h-[500px] object-cover" />
+            <picture>
+                <source type="image/webp"
+                        media="(min-width: 768px)"
+                        srcset="@mainImage.GetCropUrl(cropAlias: "hero", width: 1200, furtherOptions: "&format=webp") 1200w,
+                                @mainImage.GetCropUrl(cropAlias: "hero", width: 800, furtherOptions: "&format=webp") 800w"
+                        sizes="(min-width: 1024px) 896px, 100vw" />
+
+                <source type="image/webp"
+                        media="(max-width: 767px)"
+                        srcset="@mainImage.GetCropUrl(cropAlias: "hero", width: 640, furtherOptions: "&format=webp") 640w,
+                                @mainImage.GetCropUrl(cropAlias: "hero", width: 400, furtherOptions: "&format=webp") 400w"
+                        sizes="100vw" />
+
+                <img src="@mainImage.GetCropUrl(cropAlias: "hero", width: 800)"
+                     alt="@(string.IsNullOrEmpty(Model.ArticleTitle) ? Model.Name : Model.ArticleTitle)"
+                     loading="eager"
+                     class="w-full h-auto max-h-[500px] object-cover" />
+            </picture>
         </div>
     }
-
     @if (Model.Components != null && Model.Components.Any())
     {
         <div class="space-y-12 border-t border-slate-800/60 pt-12">
