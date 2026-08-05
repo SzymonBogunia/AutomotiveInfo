@@ -5,6 +5,7 @@
 
 @{
     Layout = "_Layout.cshtml";
+    ViewBag.Title = Model.Title ?? "Strona Informacyjna";
 
     // Pobranie dzieci (artykułów), odfiltrowanie po typie i posortowanie po dacie publikacji malejąco
     var articles = Model.Children<NewsPage>()

@@ -3,19 +3,24 @@
 @using Umbraco.Extensions
 @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
 
+
 @{
+    var currentContent = Umbraco.AssignedContentItem;
+
     // wrapper
-    var globalSettings = Model.AncestorOrSelf<ContentModels.WebsiteContainer>();
+    var globalSettings = currentContent.AncestorOrSelf<ContentModels.WebsiteContainer>();
 
-    //home page
-    var homePage = globalSettings?.FirstChild<ContentModels.FrontPage>();
+    // home page
+    var homePage = globalSettings?.FirstChild<ContentModels.FrontPage>() ?? currentContent.Root().FirstChild<ContentModels.FrontPage>();
 
-    //url angielski/polski
+    // url eng/pl
     var homePageUrl = homePage?.Url() ?? "/";
+
+    // pobieramy opublikowane dzieci strony głównej
+    var navPages = homePage?.Children().Where(x => x.IsVisible()) ?? Enumerable.Empty<IPublishedContent>();
 
     // dane z wrappera
     var logo = globalSettings?.Logo;
-    var navigationLinks = globalSettings?.NavLinks;
     var footerLinks = globalSettings?.FooterLinks;
     var copyrightText = globalSettings?.CopyrightText;
 }
@@ -46,23 +51,45 @@
                 }
             </a>
 
-            <nav class="flex items-center space-x-8 text-sm font-medium text-slate-300">
-                @if (navigationLinks != null)
+            <nav class="flex items-center space-x-8 text-sm font-medium">
+
+                @* Dynamiczna nawigacja z drzewa *@
+                @foreach (var navItem in navPages)
                 {
-                    foreach (var link in navigationLinks)
-                    {
-                        <a href="@link.Url" target="@link.Target" class="hover:text-white transition-colors">@link.Name</a>
-                    }
-                }
-                else
-                {
-                    <a href="/" class="hover:text-white transition-colors">Start</a>
-                    <a href="/aktualnosci" class="hover:text-white transition-colors">Aktualności</a>
-                    <a href="/faq" class="hover:text-white transition-colors">FAQ</a>
+                    var isActive = currentContent.IsAncestorOrSelf(navItem);
+                    <a href="@navItem.Url()" class="@(isActive ? "text-red-500 font-bold border-b-2 border-red-500 pb-1" : "text-slate-300 hover:text-white transition-colors")">
+                        @navItem.Name
+                    </a>
                 }
             </nav>
         </div>
     </header>
+    @* breadcrumbs render *@
+    @if (currentContent.Id != homePage?.Id)
+    {
+        var breadcrumbs = currentContent.Ancestors().Reverse().ToList();
+
+        <div class="bg-slate-950/40 border-b border-slate-800/60 py-3">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <nav aria-label="Breadcrumb">
+                    <ol class="inline-flex items-center space-x-1 md:space-x-2 text-xs font-medium text-slate-400">
+                        @foreach (var crumb in breadcrumbs)
+                        {
+                            <li class="inline-flex items-center">
+                                <a href="@crumb.Url()" class="hover:text-white transition-colors">
+                                    @crumb.Name
+                                </a>
+                                <span class="mx-2 text-slate-600">/</span>
+                            </li>
+                        }
+                        <li aria-current="page" class="text-red-400 font-semibold truncate">
+                            @currentContent.Name
+                        </li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    }
 
     <main class="flex-grow">
         @RenderBody()
