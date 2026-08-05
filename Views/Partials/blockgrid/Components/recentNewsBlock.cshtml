@@ -1,0 +1,76 @@
+﻿@using Umbraco.Cms.Web.Common.PublishedModels;
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockGridItem<ContentModels.RecentNewsBlock, ContentModels.BlockSettings>>
+@using Umbraco.Extensions
+@using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
+
+@{
+    if (Model.Settings?.HideBlockElement ?? false) { return; }
+
+    var blockTitle = Model.Content.BlockTitle;
+    var source = Model.Content.Source;
+    var filterTag = Model.Content.TagFilter as ContentModels.Tag;
+
+    // Pobieranie artykułów z silnym typowaniem
+    var finalArticles = (source?.Children() ?? Enumerable.Empty<Umbraco.Cms.Core.Models.PublishedContent.IPublishedContent>())
+        .OfType<ContentModels.NewsPage>()
+        .Where(x => filterTag == null || (x.Tag != null && x.Tag.Id == filterTag.Id)) 
+        .OrderByDescending(x => x.PublishDate != default ? x.PublishDate : x.CreateDate)
+        .Take(3)
+        .ToList();
+}
+
+<div class="my-16 max-w-6xl mx-auto">
+    @if (!string.IsNullOrEmpty(blockTitle))
+    {
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl md:text-3xl font-extrabold text-white">@blockTitle</h2>
+            @if (source != null)
+            {
+                <a href="@source.Url()" class="text-sm font-semibold text-red-500 hover:text-red-400 transition-colors">Zobacz wszystkie →</a>
+            }
+        </div>
+    }
+
+    @if (finalArticles.Any())
+    {
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            @foreach (var article in finalArticles)
+            {
+                var mainImage = article.MainImage;
+                var tagNode = article.Tag as ContentModels.Tag;
+                var publishDate = article.PublishDate;
+                var articleTitle = article.ArticleTitle;
+
+                <a href="@article.Url()" class="group bg-slate-900 border border-slate-800/60 rounded-2xl overflow-hidden hover:border-slate-700 transition-all hover:scale-[1.01] flex flex-col h-full shadow-lg">
+                    <div class="aspect-video w-full overflow-hidden bg-slate-950 relative">
+                        @if (mainImage != null)
+                        {
+                            <img src="@mainImage.Url()" alt="@articleTitle" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        }
+                        @if (tagNode != null)
+                        {
+                            <span class="absolute top-3 left-3 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-950/80 backdrop-blur-md text-red-400 border border-slate-800">
+                                #@tagNode.TagName
+                            </span>
+                        }
+                    </div>
+
+                    <div class="p-5 flex flex-col flex-grow">
+                        @if (publishDate != default)
+                        {
+                            <span class="text-[11px] text-slate-500 mb-2 block">📅 @publishDate.ToString("dd.MM.yyyy")</span>
+                        }
+                        <h3 class="text-lg font-bold text-white group-hover:text-red-500 transition-colors line-clamp-2">@articleTitle</h3>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-12 bg-slate-900/40 rounded-2xl border border-slate-800/40">
+            <span class="text-2xl mb-2 block">🔍</span>
+            <p class="text-sm text-slate-400 font-medium">Brak wyników spełniających kryteria filtrowania.</p>
+        </div>
+    }
+</div>

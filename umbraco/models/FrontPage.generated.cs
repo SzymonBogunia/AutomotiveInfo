@@ -50,7 +50,7 @@ namespace Umbraco.Cms.Web.Common.PublishedModels
 		// properties
 
 		///<summary>
-		/// Komponenty
+		/// Komponenty: Elastyczna lista bloków treści. / Flexible list of content blocks.
 		///</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder.Embedded", "17.5.3+a9649da")]
 		[global::System.Diagnostics.CodeAnalysis.MaybeNull]
@@ -58,7 +58,7 @@ namespace Umbraco.Cms.Web.Common.PublishedModels
 		public virtual global::Umbraco.Cms.Core.Models.Blocks.BlockListModel Components => this.Value<global::Umbraco.Cms.Core.Models.Blocks.BlockListModel>(_publishedValueFallback, "components");
 
 		///<summary>
-		/// Przycisk
+		/// Przycisk: Przycisk wezwania do działania. / Call-to-action button.
 		///</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder.Embedded", "17.5.3+a9649da")]
 		[global::System.Diagnostics.CodeAnalysis.MaybeNull]
@@ -66,7 +66,7 @@ namespace Umbraco.Cms.Web.Common.PublishedModels
 		public virtual global::System.Collections.Generic.IEnumerable<global::Umbraco.Cms.Core.Models.Link> HeroCta => this.Value<global::System.Collections.Generic.IEnumerable<global::Umbraco.Cms.Core.Models.Link>>(_publishedValueFallback, "heroCta");
 
 		///<summary>
-		/// Zdjęcie
+		/// Zdjęcie: Zdjęcie tła sekcji Hero (wspólne dla języków). / Hero background image (shared across cultures).
 		///</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder.Embedded", "17.5.3+a9649da")]
 		[global::System.Diagnostics.CodeAnalysis.MaybeNull]
@@ -74,7 +74,7 @@ namespace Umbraco.Cms.Web.Common.PublishedModels
 		public virtual global::Umbraco.Cms.Core.Models.MediaWithCrops HeroImage => this.Value<global::Umbraco.Cms.Core.Models.MediaWithCrops>(_publishedValueFallback, "heroImage");
 
 		///<summary>
-		/// Opis
+		/// Opis: Krótki tekst pod tytułem. / Short lead text under the title.
 		///</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder.Embedded", "17.5.3+a9649da")]
 		[global::System.Diagnostics.CodeAnalysis.MaybeNull]
@@ -82,12 +82,20 @@ namespace Umbraco.Cms.Web.Common.PublishedModels
 		public virtual string HeroLead => this.Value<string>(_publishedValueFallback, "heroLead");
 
 		///<summary>
-		/// Główny Tytuł
+		/// Główny Tytuł: Główny nagłówek sekcji Hero. / Main hero headline. (wartość różna per język / varies by culture)
 		///</summary>
 		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder.Embedded", "17.5.3+a9649da")]
 		[global::System.Diagnostics.CodeAnalysis.MaybeNull]
 		[ImplementPropertyType("heroTitle")]
 		public virtual string HeroTitle => this.Value<string>(_publishedValueFallback, "heroTitle");
+
+		///<summary>
+		/// Main Grid Layout
+		///</summary>
+		[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Umbraco.ModelsBuilder.Embedded", "17.5.3+a9649da")]
+		[global::System.Diagnostics.CodeAnalysis.MaybeNull]
+		[ImplementPropertyType("mainGridLayout")]
+		public virtual global::Umbraco.Cms.Core.Models.Blocks.BlockGridModel MainGridLayout => this.Value<global::Umbraco.Cms.Core.Models.Blocks.BlockGridModel>(_publishedValueFallback, "mainGridLayout");
 
 		///<summary>
 		/// Opis SEO

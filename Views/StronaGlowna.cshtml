@@ -12,6 +12,8 @@
     var firstCta = Model.HeroCta?.FirstOrDefault();
 }
 
+
+
 <section class="relative bg-slate-950 py-24 md:py-32 overflow-hidden">
     <div class="absolute inset-0 z-0 opacity-40 bg-cover bg-center" style="background-image: url('@heroImageUrl');"></div>
     <div class="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-transparent z-10"></div>
@@ -45,6 +47,7 @@
     </div>
 </section>
 
+
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
     @if (Model.Components != null)
     {
@@ -53,3 +56,10 @@
         </div>
     }
 </section>
+
+@if (Model.MainGridLayout != null)
+{
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        @await Html.GetBlockGridHtmlAsync(Model.MainGridLayout)
+    </section>
+}

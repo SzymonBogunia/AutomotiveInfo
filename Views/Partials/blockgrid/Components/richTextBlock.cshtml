@@ -1,0 +1,20 @@
+﻿@using Umbraco.Cms.Web.Common.PublishedModels;
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockGridItem<ContentModels.RichTextBlock, ContentModels.BlockSettings>>
+@using Umbraco.Extensions
+@using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
+
+@{
+    if (Model.Settings?.HideBlockElement ?? false) { return; }
+
+    var textContent = Model.Content.ComponentText;
+    var colSpan = Model.ColumnSpan;
+}
+
+@if (textContent != null && !string.IsNullOrEmpty(textContent.ToString()))
+{
+    <div class="col-span-12 md:col-span-@colSpan">
+        <div class="prose prose-invert max-w-none my-8 leading-relaxed [&_p]:mb-6">
+            @textContent
+        </div>
+    </div>
+}
