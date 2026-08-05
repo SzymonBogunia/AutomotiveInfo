@@ -1,0 +1,171 @@
+﻿@using Umbraco.Cms.Core
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@using Umbraco.Cms.Core.Strings
+@using Umbraco.Cms.Web.Common.PublishedModels
+@using Umbraco.Extensions
+@using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<ContentModels.SearchPage>
+
+@{
+    Layout = "_Layout.cshtml";
+
+    string searchQuery = Context.Request.Query["q"].ToString().Trim();
+
+    int pageSize = 5;
+    int pageNumber = 1;
+    if (int.TryParse(Context.Request.Query["page"], out int p) && p > 0)
+    {
+        pageNumber = p;
+    }
+
+    IEnumerable<IPublishedContent> searchResults = Enumerable.Empty<IPublishedContent>();
+    long totalResults = 0;
+    int totalPages = 0;
+
+    if (!string.IsNullOrWhiteSpace(searchQuery))
+    {
+        var allArticles = Model.Root().DescendantsOrSelfOfType("newsPage")
+            .Where(x => x.IsPublished());
+
+        var searchTerms = searchQuery
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(t => t.Trim().ToLowerInvariant())
+            .ToArray();
+
+        var matchedArticles = allArticles.Where(article =>
+        {
+
+            string title = (article.HasValue("title") ? article.Value<string>("title")
+                          : article.HasValue("articleTitle") ? article.Value<string>("articleTitle")
+                          : article.HasValue("newsTitle") ? article.Value<string>("newsTitle")
+                          : article.Name) ?? "";
+
+            string nodeName = article.Name ?? "";
+            string lead = (article.HasValue("lead") ? article.Value<string>("lead")
+                         : article.HasValue("summary") ? article.Value<string>("summary") : "") ?? "";
+
+            var contentBuilder = new System.Text.StringBuilder();
+            contentBuilder.Append($"{title} {nodeName} {lead} ");
+
+            foreach (var prop in article.Properties)
+            {
+                // Odczyt z Block List
+                if (prop.GetValue() is BlockListModel blockList)
+                {
+                    foreach (var block in blockList)
+                    {
+                        var blockContent = block.Content;
+
+                        //  scan richTextBlock, imageWithTextBlock
+                        foreach (var blockProp in blockContent.Properties)
+                        {
+                            var val = blockProp.GetValue();
+                            if (val is IHtmlEncodedString htmlString)
+                            {
+                                contentBuilder.Append(" " + htmlString.ToHtmlString());
+                            }
+                            else if (val is string strVal)
+                            {
+                                contentBuilder.Append(" " + strVal);
+                            }
+                        }
+                    }
+                }
+                // Zwykłe pola tekstowe / RichText poza Block List
+                else
+                {
+                    var val = prop.GetValue();
+                    if (val is IHtmlEncodedString htmlString)
+                    {
+                        contentBuilder.Append(" " + htmlString.ToHtmlString());
+                    }
+                    else if (val is string strVal)
+                    {
+                        contentBuilder.Append(" " + strVal);
+                    }
+                }
+            }
+
+            // raw text
+            string rawText = System.Text.RegularExpressions.Regex.Replace(contentBuilder.ToString(), "<.*?>", " ");
+            string normalizedContent = rawText.ToLowerInvariant();
+
+            return searchTerms.Any(term => normalizedContent.Contains(term));
+        }).ToList();
+
+        totalResults = matchedArticles.Count;
+        totalPages = (int)Math.Ceiling((double)totalResults / (double)pageSize);
+
+        searchResults = matchedArticles
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize);
+    }
+}
+
+<div class="max-w-4xl mx-auto px-4 py-12 text-white">
+    <h1 class="text-3xl font-bold mb-8">Wyszukiwarka artykułów</h1>
+
+    <form action="@Model.Url()" method="get" class="mb-10 flex gap-4">
+        <input type="text"
+               name="q"
+               value="@searchQuery"
+               placeholder="Wpisz szukaną frazę..."
+               class="flex-1 bg-slate-900 text-white border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-red-500" />
+        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-3 rounded-lg transition-colors">
+            Szukaj
+        </button>
+    </form>
+
+    @if (!string.IsNullOrWhiteSpace(searchQuery))
+    {
+        <p class="text-slate-400 mb-6">Znaleziono <strong>@totalResults</strong> artykułów dla frazy: <span class="text-white">"@searchQuery"</span></p>
+
+        if (searchResults.Any())
+        {
+            <div class="space-y-6">
+                @foreach (var result in searchResults)
+                {
+                    string articleTitle = result.HasValue("title") ? result.Value<string>("title")
+                    : result.HasValue("articleTitle") ? result.Value<string>("articleTitle")
+                    : result.HasValue("newsTitle") ? result.Value<string>("newsTitle")
+                    : result.Name;
+
+                    <article class="bg-slate-900 border border-slate-800 rounded-xl p-6 transition hover:border-slate-700">
+                        <h2 class="text-xl font-bold mb-2">
+                            <a href="@result.Url()" class="hover:text-red-500 transition-colors">
+                                @articleTitle
+                            </a>
+                        </h2>
+                        @if (result.HasValue("lead") || result.HasValue("summary"))
+                        {
+                            <p class="text-slate-400 text-sm mb-3">
+                                @(result.HasValue("lead") ? result.Value("lead") : result.Value("summary"))
+                            </p>
+                        }
+                        <a href="@result.Url()" class="text-red-500 hover:underline text-sm font-semibold">Czytaj artykuł &rarr;</a>
+                    </article>
+                }
+            </div>
+
+            if (totalPages > 1)
+            {
+                <div class="flex gap-2 mt-8 justify-center">
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        var activeClass = i == pageNumber ? "bg-red-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700";
+                        <a href="@Model.Url()?q=@searchQuery&page=@i" class="px-4 py-2 rounded-lg font-medium @activeClass">
+                            @i
+                        </a>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-8 text-center text-slate-400">
+                Brak artykułów spełniających kryteria wyszukiwania.
+            </div>
+        }
+    }
+</div>
