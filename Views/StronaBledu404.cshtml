@@ -6,17 +6,18 @@
     // Samodzielny szablon 404 – renderuje się niezależnie od stanu drzewa treści/routingu.
     Layout = null;
 
-    var heading = string.IsNullOrWhiteSpace(Model.Heading) ? "Nie znaleziono strony" : Model.Heading;
+    var heading = string.IsNullOrWhiteSpace(Model.Heading) ? Umbraco.GetDictionaryValueOrDefault("Error404_Heading", "Nie znaleziono strony") : Model.Heading;
     var lead = string.IsNullOrWhiteSpace(Model.Lead)
-        ? "Strona, której szukasz, nie istnieje lub została przeniesiona."
-        : Model.Lead;
+         ? Umbraco.GetDictionaryValueOrDefault("Error404_Lead", "Strona, której szukasz, nie istnieje lub została przeniesiona.")
+         : Model.Lead;
+
 
     var homeLink = Model.Link?.FirstOrDefault();
     var homeUrl = string.IsNullOrWhiteSpace(homeLink?.Url) ? "/" : homeLink!.Url;
-    var homeText = string.IsNullOrWhiteSpace(homeLink?.Name) ? "Wróć na stronę główną" : homeLink!.Name;
+    var homeText = string.IsNullOrWhiteSpace(homeLink?.Name) ? Umbraco.GetDictionaryValueOrDefault("Error404_HomeLink", "Wróć na stronę główną") : homeLink!.Name;
 }
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="@Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

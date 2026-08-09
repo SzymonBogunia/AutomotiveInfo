@@ -26,7 +26,7 @@
             <h2 class="text-2xl md:text-3xl font-extrabold text-white">@blockTitle</h2>
             @if (source != null)
             {
-                <a href="@source.Url()" class="text-sm font-semibold text-red-500 hover:text-red-400 transition-colors">Zobacz wszystkie →</a>
+                <a href="@source.Url()" class="text-sm font-semibold text-red-500 hover:text-red-400 transition-colors">@Umbraco.GetDictionaryValueOrDefault("General_ViewAll", "Zobacz wszystkie →")</a>
             }
         </div>
     }
