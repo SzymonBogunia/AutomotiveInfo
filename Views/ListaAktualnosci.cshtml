@@ -5,7 +5,7 @@
 
 @{
     Layout = "_Layout.cshtml";
-    ViewBag.Title = Model.Title ?? "Strona Informacyjna";
+    ViewBag.Title = Model.Title ?? Umbraco.GetDictionaryValueOrDefault("General_PageTitleFallback", "Strona Informacyjna");
 
     // Pobranie dzieci (artykułów), odfiltrowanie po typie i posortowanie po dacie publikacji malejąco
     var articles = Model.Children<NewsPage>()
@@ -35,7 +35,7 @@
                         }
                         else
                         {
-                            <div class="w-full h-full flex items-center justify-center text-slate-700">🖼️ Brak zdjęcia</div>
+                            <div class="w-full h-full flex items-center justify-center text-slate-700">@Umbraco.GetDictionaryValueOrDefault("General_NoImage", "🖼️ Brak zdjęcia")</div>
                         }
 
                         @if (!string.IsNullOrEmpty(tagText))
@@ -61,7 +61,7 @@
     else
     {
         <div class="text-center py-16 bg-slate-900/50 rounded-2xl border border-slate-800/50">
-            <p class="text-slate-400">Aktualnie brak opublikowanych artykułów.</p>
+            <p class="text-slate-400">@Umbraco.GetDictionaryValueOrDefault("News_NoResults", "Aktualnie brak opublikowanych artykułów.")</p>
         </div>
     }
 </div>

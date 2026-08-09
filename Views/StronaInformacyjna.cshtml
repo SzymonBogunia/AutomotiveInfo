@@ -31,17 +31,4 @@
             @Html.GetBlockListHtml(Model.Components)
         </div>
     }
-    else
-    {
-        <div class="border border-dashed border-slate-800 rounded-2xl p-12 text-center bg-slate-950/20 my-8">
-            <div class="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center mx-auto mb-4 text-slate-400">
-                🧱
-            </div>
-            <h3 class="text-base font-semibold text-white mb-1">Brak komponentów</h3>
-            <p class="text-slate-500 max-w-xs mx-auto text-xs">
-                Ta strona korzysta z pola <code class="bg-slate-900 px-1 py-0.5 rounded text-red-400">components</code>. Przejdź do edycji tej strony w panelu CMS, aby dodać pierwsze bloki treści.
-            </p>
-        </div>
-    }
-
 </section>
