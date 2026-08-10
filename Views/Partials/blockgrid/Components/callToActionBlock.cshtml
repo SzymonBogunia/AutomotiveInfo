@@ -38,7 +38,7 @@
             <a href="@link.Url"
                target="@(!string.IsNullOrEmpty(link.Target) ? link.Target : "_self")"
                class="inline-flex items-center justify-center px-5 py-3 text-sm font-semibold rounded-lg bg-red-600 hover:bg-red-500 text-white transition-all hover:scale-[1.02]">
-                @(string.IsNullOrEmpty(link.Name) ? "Kliknij tutaj" : link.Name)
+                @(string.IsNullOrEmpty(link.Name) ? Umbraco.GetDictionaryValueOrDefault("Cta_DefaultLinkText", "Kliknij tutaj") : link.Name)
             </a>
         }
     </div>

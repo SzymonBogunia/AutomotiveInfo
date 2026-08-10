@@ -2,6 +2,7 @@
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.CreateUmbracoBuilder()
+    .AddDeliveryApi()
     .AddBackOffice()
     .AddWebsite()
     .AddComposers()
