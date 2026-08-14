@@ -1,0 +1,157 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>AutomotiveInfo — Headless Demo</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+
+        .article-card {
+            border-bottom: 1px solid #ddd;
+            padding: 16px 0;
+            cursor: pointer;
+        }
+
+            .article-card h2 {
+                margin: 0 0 4px;
+            }
+
+            .article-card time {
+                color: #888;
+                font-size: 0.9em;
+            }
+
+        .state {
+            color: #888;
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        a.back {
+            display: inline-block;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"><div class="state">Ładowanie…</div></div>
+
+    <script>
+        const API_BASE = "https://localhost:44328/umbraco/delivery/api/v2/content";
+        const app = document.getElementById("app");
+
+        async function fetchList() {
+            const res = await fetch(
+                `${API_BASE}?filter=contentType:newsPage&sort=createDate:desc&take=20`,
+                { headers: { "Accept-Language": "pl-PL" } }
+            );
+            if (!res.ok) throw new Error(`API error: ${res.status}`);
+            return res.json();
+        }
+
+        async function fetchDetail(id) {
+            const res = await fetch(
+                `${API_BASE}/item/${id}?expand=properties[$all]`,
+                { headers: { "Accept-Language": "pl-PL" } }
+            );
+            if (!res.ok) throw new Error(`API error: ${res.status}`);
+            return res.json();
+        }
+
+        function renderList(items) {
+            if (!items.length) {
+                app.innerHTML = `<div class="state">Brak artykułów do wyświetlenia.</div>`;
+                return;
+            }
+            app.innerHTML = `
+        <h1>AutomotiveInfo — Artykuły</h1>
+        ${items.map(item => `
+          <div class="article-card" data-id="${item.id}">
+            <h2>${item.name}</h2>
+            <time>${new Date(item.properties?.createDate ?? item.createDate ?? Date.now()).toLocaleDateString("pl-PL")}</time>
+          </div>
+        `).join("")}
+      `;
+            document.querySelectorAll(".article-card").forEach(card => {
+                card.addEventListener("click", () => {
+                    location.hash = `#/article/${card.dataset.id}`;
+                });
+            });
+        }
+
+        function getRichText(prop) {
+            if (!prop) return "";
+            if (typeof prop === "string") return prop;
+            if (typeof prop === "object" && "markup" in prop) return prop.markup ?? "";
+            return "";
+        }
+
+        function renderBlock(block) {
+            const { contentType, properties } = block.content;
+
+            switch (contentType) {
+                case "richTextBlock":
+                    return `<div class="block block-text">${getRichText(properties.componentText)}</div>`;
+
+                case "imageWithTextBlock": {
+                    const img = properties.image?.[0]; // media picker zwraca tablicę
+                    const imgHtml = img
+                        ? `<img src="${img.url}" alt="${img.name ?? ""}" style="max-width:100%">`
+                        : "";
+                    return `
+        <div class="block block-image-text">
+          ${imgHtml}
+          <div>${getRichText(properties.text)}</div>
+        </div>
+      `;
+                }
+
+                default:
+                    return `<div class="block block-unknown"><!-- nieobsłużony blok: ${contentType} --></div>`;
+            }
+        }
+
+        function renderDetail(item) {
+            const blockList = item.properties?.components?.items ?? []; 
+            const contentHtml = blockList.length
+                ? blockList.map(renderBlock).join("")
+                : "<p>(brak treści)</p>";
+
+            app.innerHTML = `
+    <a href="#/" class="back">← Wróć do listy</a>
+    <h1>${item.name}</h1>
+    ${contentHtml}
+  `;
+        }
+
+        function renderError(err) {
+            app.innerHTML = `<div class="state">Błąd: ${err.message}</div>`;
+        }
+
+        async function route() {
+            app.innerHTML = `<div class="state">Ładowanie…</div>`;
+            const hash = location.hash;
+            try {
+                if (hash.startsWith("#/article/")) {
+                    const id = hash.replace("#/article/", "");
+                    const item = await fetchDetail(id);
+                    renderDetail(item);
+                } else {
+                    const data = await fetchList();
+                    renderList(data.items ?? []);
+                }
+            } catch (err) {
+                renderError(err);
+            }
+        }
+
+        window.addEventListener("hashchange", route);
+        route();
+    </script>
+</body>
+</html>
