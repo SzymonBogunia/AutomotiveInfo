@@ -10,7 +10,7 @@ using AutomotiveInfo.Caching;
 namespace AutomotiveInfo.Controllers;
 
 [ApiController]
-[Route("api/news")]
+[Route("api/v1/news")]
 public class NewsApiController : Controller
 {
     private readonly IPublishedContentQuery _contentQuery;
@@ -31,18 +31,25 @@ public class NewsApiController : Controller
     }
 
     [HttpGet("latest")]
+    [ProducesResponseType(typeof(List<NewsArticleDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public IActionResult GetLatest([FromQuery] string? tag, [FromQuery] int count = 3)
     {
-        if (count <= 0)
-        {
-            return BadRequest("count musi być liczbą dodatnią.");
-        }
+        count = Math.Clamp(count, 1, 20);
 
         var allArticles = _cache.GetOrCreate(NewsCacheKeys.AllArticles, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = CacheDuration;
             return LoadAllArticlesFromContent();
         }) ?? new List<NewsArticleDto>();
+
+        if (allArticles.Count == 0)
+        {
+            return Problem(
+                title: "Brak dostępnych artykułów",
+                detail: $"Nie znaleziono węzła listy aktualności o adresie '{NewsListUrlSegment}' albo nie ma pod nim żadnych artykułów.",
+                statusCode: StatusCodes.Status404NotFound);
+        }
 
         var filtered = allArticles.AsEnumerable();
 
@@ -88,12 +95,6 @@ public class NewsApiController : Controller
         };
     }
 
-    private static bool ArticleHasTag(IPublishedContent article, string tag)
-    {
-        var tagItems = GetPickerItems(article, "tag");
-        return tagItems.Any(t =>
-            string.Equals(t.Value<string>("tagName"), tag, StringComparison.OrdinalIgnoreCase));
-    }
 
     private static DateTime GetPublishDate(IPublishedContent article)
     {
