@@ -58,7 +58,7 @@
         async function fetchDetail(id) {
             const res = await fetch(
                 `${API_BASE}/item/${id}?expand=properties[$all]`,
-                { headers: { "Accept-Language": "pl-PL" } }
+                { headers: { "Accept-Language": "pl-PL", "Api-Key": API_KEY } }
             );
             if (!res.ok) throw new Error(`API error: ${res.status}`);
             return res.json();

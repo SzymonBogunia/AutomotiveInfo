@@ -1,38 +1,71 @@
 ﻿using AutomotiveInfo.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Extensions;
+using AutomotiveInfo.Caching;
 
 namespace AutomotiveInfo.Controllers;
 
 [ApiController]
-[Route("api/news")]
+[Route("api/v1/news")]
 public class NewsApiController : Controller
 {
     private readonly IPublishedContentQuery _contentQuery;
     private readonly IUmbracoContextAccessor _umbracoContextAccessor;
+    private readonly IMemoryCache _cache;
 
-    // UWAGA: podmień jeśli Twój węzeł-kontener ma inny adres niż "strona-aktualnosci"
     private const string NewsListUrlSegment = "strona-aktualnosci";
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(10);
 
     public NewsApiController(
         IPublishedContentQuery contentQuery,
-        IUmbracoContextAccessor umbracoContextAccessor)
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IMemoryCache cache)
     {
         _contentQuery = contentQuery;
         _umbracoContextAccessor = umbracoContextAccessor;
+        _cache = cache;
     }
 
     [HttpGet("latest")]
+    [ProducesResponseType(typeof(List<NewsArticleDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public IActionResult GetLatest([FromQuery] string? tag, [FromQuery] int count = 3)
     {
-        if (count <= 0)
+        count = Math.Clamp(count, 1, 20);
+
+        var allArticles = _cache.GetOrCreate(NewsCacheKeys.AllArticles, entry =>
         {
-            return BadRequest("count musi być liczbą dodatnią.");
+            entry.AbsoluteExpirationRelativeToNow = CacheDuration;
+            return LoadAllArticlesFromContent();
+        }) ?? new List<NewsArticleDto>();
+
+        if (allArticles.Count == 0)
+        {
+            return Problem(
+                title: "Brak dostępnych artykułów",
+                detail: $"Nie znaleziono węzła listy aktualności o adresie '{NewsListUrlSegment}' albo nie ma pod nim żadnych artykułów.",
+                statusCode: StatusCodes.Status404NotFound);
         }
 
+        var filtered = allArticles.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(tag))
+        {
+            filtered = filtered.Where(a =>
+                string.Equals(a.Tag, tag, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var result = filtered.Take(count).ToList();
+
+        return Ok(result);
+    }
+
+    private List<NewsArticleDto> LoadAllArticlesFromContent()
+    {
         var newsListPage = _contentQuery
             .ContentAtRoot()
             .SelectMany(root => root.DescendantsOrSelf<IPublishedContent>())
@@ -40,25 +73,15 @@ public class NewsApiController : Controller
 
         if (newsListPage is null)
         {
-            return NotFound($"Nie znaleziono węzła listy aktualności o adresie '{NewsListUrlSegment}'.");
+            return new List<NewsArticleDto>();
         }
 
-        var articles = newsListPage
+        return newsListPage
             .Children()
-            .Where(x => x.ContentType.Alias == "newsPage");
-
-        if (!string.IsNullOrWhiteSpace(tag))
-        {
-            articles = articles.Where(article => ArticleHasTag(article, tag));
-        }
-
-        var result = articles
+            .Where(x => x.ContentType.Alias == "newsPage")
             .OrderByDescending(GetPublishDate)
-            .Take(count)
             .Select(MapToDto)
             .ToList();
-
-        return Ok(result);
     }
 
     private static IEnumerable<IPublishedContent> GetPickerItems(IPublishedContent content, string alias)
@@ -72,12 +95,6 @@ public class NewsApiController : Controller
         };
     }
 
-    private static bool ArticleHasTag(IPublishedContent article, string tag)
-    {
-        var tagItems = GetPickerItems(article, "tag");
-        return tagItems.Any(t =>
-            string.Equals(t.Value<string>("tagName"), tag, StringComparison.OrdinalIgnoreCase));
-    }
 
     private static DateTime GetPublishDate(IPublishedContent article)
     {
