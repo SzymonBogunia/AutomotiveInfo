@@ -37,8 +37,6 @@ public class TagFilterHandler : IFilterHandler, IContentIndexHandler
         };
     }
 
-    // --- Indexing: jak wyciągnąć nazwę tagu i wrzucić ją do indeksu ---
-
     public IEnumerable<IndexField> GetFields()
         => new[]
         {
