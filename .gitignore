@@ -40,3 +40,12 @@ appsettings.Development.json
 .mcp.json
 
 /umbraco/models/*.flag
+
+## Node / npm / Vite (Client/*)
+
+**/node_modules/
+**/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
