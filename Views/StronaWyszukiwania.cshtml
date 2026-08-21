@@ -10,6 +10,7 @@
     int pageNumber = int.TryParse(Context.Request.Query["page"], out int p) && p > 0 ? p : 1;
 
     var result = ArticleSearchService.Search(searchQuery, pageNumber, pageSize);
+    string encodedQuery = Uri.EscapeDataString(searchQuery);
 }
 
 <div class="max-w-4xl mx-auto px-4 py-12 text-white">
@@ -58,7 +59,7 @@
                     @for (int i = 1; i <= result.TotalPages; i++)
                     {
                         var activeClass = i == pageNumber ? "bg-red-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700";
-                        <a href="@Model.Url()?q=@searchQuery&page=@i" class="px-4 py-2 rounded-lg font-medium @activeClass">@i</a>
+                        <a href="@Model.Url()?q=@encodedQuery&page=@i" class="px-4 py-2 rounded-lg font-medium @activeClass">@i</a>
                     }
                 </div>
             }

@@ -21,6 +21,7 @@ public interface IArticleSearchService
 public class ArticleSearchService : IArticleSearchService
 {
     private const string NewsPageAlias = "newsPage";
+    private const string TagAlias = "tag";
 
     // Pola przeszukiwane w ExternalIndex.
     // Sufiks "_pl-pl" wynika z tego, że newsPage jest wariantowy kulturowo
@@ -32,7 +33,6 @@ public class ArticleSearchService : IArticleSearchService
         "nodeName",
         "articleTitle_pl-pl",
         "components_pl-pl",
-        "tags"
     };
 
     private readonly IExamineManager _examineManager;
@@ -55,12 +55,16 @@ public class ArticleSearchService : IArticleSearchService
         pageNumber = pageNumber < 1 ? 1 : pageNumber;
         var skip = (pageNumber - 1) * pageSize;
 
-        IQuery baseQuery = index.Searcher
-            .CreateQuery("content")
-            .NodeTypeAlias(NewsPageAlias)
-            .And();
+        var trimmed = query.Trim();
 
-        IBooleanOperation booleanQuery = baseQuery.ManagedQuery(query, SearchFields);
+        IBooleanOperation? booleanQuery = trimmed.StartsWith('#')
+            ? BuildTagQuery(index, trimmed.TrimStart('#').Trim())
+            : BuildTextQuery(index, trimmed);
+
+        if (booleanQuery is null)
+        {
+            return new ArticleSearchResult(Array.Empty<IPublishedContent>(), 0, 0, pageNumber);
+        }
 
         ISearchResults results = booleanQuery.Execute(QueryOptions.SkipTake(skip, pageSize));
 
@@ -75,6 +79,58 @@ public class ArticleSearchService : IArticleSearchService
             .Cast<IPublishedContent>()
             .ToList();
 
+        Console.WriteLine($"[DEBUG] nativeQuery result count: {results.TotalItemCount}");
+
         return new ArticleSearchResult(items, totalResults, totalPages, pageNumber);
+    }
+
+    private static IBooleanOperation BuildTextQuery(IIndex index, string term)
+    {
+        return index.Searcher
+            .CreateQuery("content")
+            .NodeTypeAlias(NewsPageAlias)
+            .And()
+            .ManagedQuery(term, SearchFields);
+    }
+
+    private static IBooleanOperation? BuildTagQuery(IIndex index, string tagName)
+    {
+        if (string.IsNullOrWhiteSpace(tagName))
+        {
+            return null;
+        }
+
+        var tagUdis = GetTagUdis(index, tagName);
+
+        if (tagUdis.Length == 0)
+        {
+            return null;
+        }
+
+        // Budujemy zapytanie Lucene w postaci: +(tag:"umb://..." tag:"umb://...")
+        // Wymusza to, że artykuł MUSI posiadać przynajmniej jeden z tych UDI w polu 'tag'
+        var tagClauses = string.Join(" OR ", tagUdis.Select(u => $"tag:\"{u}\""));
+        var rawQuery = $"+__NodeTypeAlias:{NewsPageAlias} +({tagClauses})";
+
+        return index.Searcher
+            .CreateQuery("content")
+            .NativeQuery(rawQuery);
+    }
+
+    private static string[] GetTagUdis(IIndex index, string tagName)
+    {
+        ISearchResults tagNodeResults = index.Searcher
+            .CreateQuery("content")
+            .NodeTypeAlias(TagAlias)
+            .And()
+            .Field("nodeName", tagName)
+            .Execute();
+
+        return tagNodeResults
+            .Select(r => r.Values.TryGetValue("__Key", out var key) ? key : null)
+            .Where(k => !string.IsNullOrEmpty(k))
+            .Select(k => $"umb://document/{k!.Replace("-", "").ToLowerInvariant()}")
+            .Distinct()
+            .ToArray();
     }
 }
