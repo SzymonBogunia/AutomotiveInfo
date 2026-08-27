@@ -1,8 +1,9 @@
-﻿@using Umbraco.Cms.Web.Common.PublishedModels;
+﻿@using System.Globalization
+@using Umbraco.Cms.Web.Common.PublishedModels;
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
 @using Umbraco.Extensions
 @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
-
+@inject Umbraco.Cms.Core.PublishedCache.IDefaultCultureAccessor DefaultCultureAccessor
 
 @{
     var currentContent = Umbraco.AssignedContentItem;
@@ -23,16 +24,51 @@
     var logo = globalSettings?.Logo;
     var footerLinks = globalSettings?.FooterLinks;
     var copyrightText = globalSettings?.CopyrightText;
+
+    // --- SEO (kompozycja seoSettings przez wygenerowany interfejs ISeoSettings) ---
+    // Tytuł: SEO Title redaktora > tytuł ustawiony przez widok > nazwa węzła.
+    var seo = currentContent as ISeoSettings;
+    var fallbackTitle = (ViewBag.Title as string) ?? currentContent.Name;
+    var pageTitle = string.IsNullOrWhiteSpace(seo?.SeoTitle) ? fallbackTitle : seo!.SeoTitle;
+    var metaDescription = seo?.SeoDescription;
+    var hideFromSearch = seo?.SeoToggle == true;
+
+    var canonicalUrl = currentContent.Url(mode: UrlMode.Absolute);
+
+    // hreflang: tylko kultury, w których ten węzeł jest opublikowany.
+    var publishedCultures = currentContent.Cultures.Keys
+        .Where(c => !string.IsNullOrEmpty(c))
+        .Select(c => CultureInfo.GetCultureInfo(c).Name)
+        .ToList();
 }
 
 <!DOCTYPE html>
-<html lang="@Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName">
+<html lang="@CultureInfo.CurrentCulture.TwoLetterISOLanguageName">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewBag.Title - AutomotiveInfo</title>
+    <title>@pageTitle - AutomotiveInfo</title>
+
+    @if (!string.IsNullOrWhiteSpace(metaDescription))
+    {
+        <meta name="description" content="@metaDescription" />
+    }
+    @if (hideFromSearch)
+    {
+        <meta name="robots" content="noindex,nofollow" />
+    }
+    <link rel="canonical" href="@canonicalUrl" />
+    @if (publishedCultures.Count > 1)
+    {
+        foreach (var culture in publishedCultures)
+        {
+            <link rel="alternate" hreflang="@culture" href="@currentContent.Url(culture: culture, mode: UrlMode.Absolute)" />
+        }
+        <link rel="alternate" hreflang="x-default" href="@currentContent.Url(culture: DefaultCultureAccessor.DefaultCulture, mode: UrlMode.Absolute)" />
+    }
 
     <script src="https://cdn.tailwindcss.com"></script>
+    @await RenderSectionAsync("Head", required: false)
 </head>
 <body class="bg-slate-900 text-slate-100 flex flex-col min-h-screen">
 

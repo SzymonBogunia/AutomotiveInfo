@@ -1,17 +1,9 @@
-﻿@using Umbraco.Cms.Web.Common.PublishedModels;
+@using AutomotiveInfo.Models.Blocks
+@using Umbraco.Cms.Web.Common.PublishedModels;
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem<ContentModels.RichTextBlock, ContentModels.BlockSettings>>
-@using Umbraco.Extensions
 @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
 
 @{
     if (Model.Settings?.HideBlockElement ?? false) { return; }
-
-    var textContent = Model.Content.ComponentText;
 }
-
-@if (textContent != null && !string.IsNullOrEmpty(textContent.ToString()))
-{
-    <div class="prose prose-invert max-w-none my-8 leading-relaxed [&_p]:mb-6">
-        @textContent
-    </div>
-}
+@await Html.PartialAsync("components/_richText", Model.Content.ToViewModel(Model.Settings))

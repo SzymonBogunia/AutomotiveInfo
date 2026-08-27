@@ -1,0 +1,10 @@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<AutomotiveInfo.Models.Blocks.RichTextViewModel>
+
+@if (Model.Text is not null && !string.IsNullOrEmpty(Model.Text.ToHtmlString()))
+{
+    <div id="@Model.Chrome.AnchorId"
+         style="@Model.Chrome.BackgroundStyle"
+         class="prose prose-invert max-w-none leading-relaxed [&_p]:mb-6 @Model.Chrome.SpacingClasses @Model.Chrome.BackgroundPaddingClasses">
+        @Model.Text
+    </div>
+}

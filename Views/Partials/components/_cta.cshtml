@@ -1,0 +1,28 @@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<AutomotiveInfo.Models.Blocks.CtaViewModel>
+
+@* Background comes from the shared block settings as an inline hex value — driven by the
+   picker's stable value, not its editor-facing label, and immune to Tailwind purging. *@
+<div id="@Model.Chrome.AnchorId"
+     style="@Model.Chrome.BackgroundStyle"
+     class="p-8 md:p-12 rounded-2xl border border-slate-800/80 shadow-2xl @Model.Chrome.SpacingClasses">
+    <div class="max-w-2xl">
+        @if (!string.IsNullOrEmpty(Model.Header))
+        {
+            <h3 class="text-2xl md:text-3xl font-bold text-white mb-3">@Model.Header</h3>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.Lead))
+        {
+            <p class="text-slate-300 mb-6 leading-relaxed">@Model.Lead</p>
+        }
+
+        @if (Model.Link is not null)
+        {
+            <a href="@Model.Link.Url"
+               target="@(!string.IsNullOrEmpty(Model.Link.Target) ? Model.Link.Target : "_self")"
+               class="inline-flex items-center justify-center px-5 py-3 text-sm font-semibold rounded-lg bg-red-600 hover:bg-red-500 text-white transition-all hover:scale-[1.02]">
+                @(string.IsNullOrEmpty(Model.Link.Name) ? Umbraco.GetDictionaryValueOrDefault("Cta_DefaultLinkText", "Kliknij tutaj") : Model.Link.Name)
+            </a>
+        }
+    </div>
+</div>

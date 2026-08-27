@@ -1,0 +1,31 @@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<AutomotiveInfo.Models.NewsArticleDto>
+
+@* The single article-card used by the news list and the recent-news block. *@
+<a href="@Model.Url" class="group bg-slate-900 border border-slate-800/60 rounded-2xl overflow-hidden hover:border-slate-700 transition-all duration-300 hover:scale-[1.01] flex flex-col h-full shadow-lg">
+    <div class="aspect-video w-full overflow-hidden bg-slate-950 relative">
+        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+        {
+            <img src="@Model.ImageUrl" alt="@Model.Title" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        }
+        else
+        {
+            <div class="w-full h-full flex items-center justify-center text-slate-700">@Umbraco.GetDictionaryValueOrDefault("General_NoImage", "🖼️ Brak zdjęcia")</div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.Tag))
+        {
+            <span class="absolute top-4 left-4 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-950/80 backdrop-blur-md text-red-400 border border-slate-800">
+                #@Model.Tag
+            </span>
+        }
+    </div>
+
+    <div class="p-6 flex flex-col flex-grow">
+        <span class="text-xs text-slate-500 mb-2 block">
+            <time datetime="@Model.Date.ToString("yyyy-MM-dd")">📅 @Model.Date.ToString("d")</time>
+        </span>
+        <h3 class="text-xl font-bold text-white group-hover:text-red-500 transition-colors line-clamp-2 mb-3">
+            @Model.Title
+        </h3>
+    </div>
+</a>

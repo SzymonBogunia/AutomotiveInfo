@@ -1,0 +1,43 @@
+{
+  "$schema": "../../../umbraco-package-schema.json",
+  "name": "AutomotiveInfo",
+  "version": "1.0.0",
+  "extensions": [
+    {
+      "type": "dashboard",
+      "alias": "AutomotiveInfo.EditorialStats.Dashboard",
+      "name": "Editorial Stats Dashboard",
+      "element": "/App_Plugins/AutomotiveInfo/editorial-stats.js",
+      "elementName": "automotive-editorial-stats",
+      "weight": 10,
+      "meta": {
+        "label": "#editorialStats_label",
+        "pathname": "editorial-stats"
+      },
+      "conditions": [
+        {
+          "alias": "Umb.Condition.SectionAlias",
+          "match": "Umb.Section.Content"
+        }
+      ]
+    },
+    {
+      "type": "localization",
+      "alias": "AutomotiveInfo.Lang.En",
+      "name": "AutomotiveInfo (English)",
+      "meta": {
+        "culture": "en"
+      },
+      "js": "/App_Plugins/AutomotiveInfo/lang/en.js"
+    },
+    {
+      "type": "localization",
+      "alias": "AutomotiveInfo.Lang.Pl",
+      "name": "AutomotiveInfo (Polish)",
+      "meta": {
+        "culture": "pl"
+      },
+      "js": "/App_Plugins/AutomotiveInfo/lang/pl.js"
+    }
+  ]
+}

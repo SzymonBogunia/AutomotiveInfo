@@ -5,8 +5,21 @@
     <Nullable>enable</Nullable>
     <CompressionEnabled>false</CompressionEnabled> <!-- Disable compression. E.g. for umbraco backoffice files. These files should be precompressed by node and not let dotnet handle it -->
   </PropertyGroup>
+  <!-- Backoffice extensions live in Client\<Name>\ (Vite) and build into App_Plugins\<Name>\,
+       per the official "Vite package setup" guide. Deliberately NO entries here:
+       App_Plugins/** is globbed into build + publish output by Umbraco's own MSBuild targets,
+       and adding an explicit <Content Include> without CopyToPublishDirectory overrides that
+       globbing and silently drops the file from `dotnet publish` (verified the hard way).
+       The built output is committed, so the site runs without Node — see Client\README.md.
+       The two lines below are the only concessions: the Web SDK globs **/*.json, which would
+       otherwise publish package-lock.json and a second (dead) umbraco-package.json from
+       Client\; and TypeScriptCompileBlocked keeps Visual Studio from compiling the .ts files
+       itself alongside Vite, which the guide warns about. -->
+  <PropertyGroup>
+    <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
+  </PropertyGroup>
   <ItemGroup>
-    <Content Include="App_Plugins\EditorialStatsDashboard\umbraco-package.json" />
+    <Content Remove="Client\**" />
   </ItemGroup>
 
   <ItemGroup>

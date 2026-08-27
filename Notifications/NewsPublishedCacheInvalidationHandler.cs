@@ -1,5 +1,4 @@
-﻿using AutomotiveInfo.Caching;
-using Microsoft.Extensions.Caching.Memory;
+using AutomotiveInfo.Caching;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Notifications;
 
@@ -7,14 +6,14 @@ namespace AutomotiveInfo.Notifications;
 
 public class NewsPublishedCacheInvalidationHandler : INotificationHandler<ContentPublishedNotification>
 {
-    private readonly IMemoryCache _cache;
+    private readonly NewsCacheSignal _cacheSignal;
     private readonly ILogger<NewsPublishedCacheInvalidationHandler> _logger;
 
     public NewsPublishedCacheInvalidationHandler(
-        IMemoryCache cache,
+        NewsCacheSignal cacheSignal,
         ILogger<NewsPublishedCacheInvalidationHandler> logger)
     {
-        _cache = cache;
+        _cacheSignal = cacheSignal;
         _logger = logger;
     }
 
@@ -29,7 +28,7 @@ public class NewsPublishedCacheInvalidationHandler : INotificationHandler<Conten
             return;
         }
 
-        _cache.Remove(NewsCacheKeys.AllArticles);
+        _cacheSignal.Invalidate();
 
         foreach (var article in publishedNewsArticles)
         {

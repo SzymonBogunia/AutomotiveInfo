@@ -1,21 +1,23 @@
-﻿@using Umbraco.Cms.Web.Common.PublishedModels;
+﻿@using AutomotiveInfo.Models
+@using Umbraco.Cms.Web.Common.PublishedModels;
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<ContentModels.NewsListPage>
 @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
 @using Umbraco.Extensions
+@inject AutomotiveInfo.News.INewsArticleService NewsArticleService
 
 @{
     Layout = "_Layout.cshtml";
-    ViewBag.Title = Model.Title ?? Umbraco.GetDictionaryValueOrDefault("General_PageTitleFallback", "Strona Informacyjna");
+    // title is mandatory on the document type — no fallback needed.
+    ViewBag.Title = Model.Title;
 
-    // Pobranie dzieci (artykułów), odfiltrowanie po typie i posortowanie po dacie publikacji malejąco
-    var articles = Model.Children<NewsPage>()
-        .OrderByDescending(x => x.PublishDate)
-        .ToList();
+    // The same cached, culture-aware source the recent-news block and the API use.
+    var culture = NewsArticleService.ResolveCulture(null)!;
+    var articles = NewsArticleService.GetArticles(culture) ?? Array.Empty<NewsArticleDto>();
 }
 
 <div class="container mx-auto px-4 py-12 max-w-6xl">
     <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-12 text-center">
-        @(string.IsNullOrEmpty(Model.Title) ? Model.Name : Model.Title)
+        @Model.Title
     </h1>
 
     @if (articles.Any())
@@ -23,38 +25,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             @foreach (var article in articles)
             {
-                var mainImage = article.MainImage;
-                var tagNode = article.Tag as ContentModels.Tag;
-                string? tagText = tagNode?.TagName;
-
-                <a href="@article.Url()" class="group bg-slate-900 border border-slate-800/60 rounded-2xl overflow-hidden hover:border-slate-700 transition-all duration-300 hover:scale-[1.01] flex flex-col h-full shadow-lg">
-                    <div class="aspect-video w-full overflow-hidden bg-slate-950 relative">
-                        @if (mainImage != null)
-                        {
-                            <img src="@mainImage.Url()" alt="@article.ArticleTitle" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        }
-                        else
-                        {
-                            <div class="w-full h-full flex items-center justify-center text-slate-700">@Umbraco.GetDictionaryValueOrDefault("General_NoImage", "🖼️ Brak zdjęcia")</div>
-                        }
-
-                        @if (!string.IsNullOrEmpty(tagText))
-                        {
-                            <span class="absolute top-4 left-4 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-950/80 backdrop-blur-md text-red-400 border border-slate-800">
-                                #@tagText
-                            </span>
-                        }
-                    </div>
-
-                    <div class="p-6 flex flex-col flex-grow">
-                        <span class="text-xs text-slate-500 mb-2 block">
-                            📅 @article.PublishDate.ToString("dd.MM.yyyy")
-                        </span>
-                        <h2 class="text-xl font-bold text-white group-hover:text-red-500 transition-colors line-clamp-2 mb-3">
-                            @(string.IsNullOrEmpty(article.ArticleTitle) ? article.Name : article.ArticleTitle)
-                        </h2>
-                    </div>
-                </a>
+                @await Html.PartialAsync("components/_articleCard", article)
             }
         </div>
     }

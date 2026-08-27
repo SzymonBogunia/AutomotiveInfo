@@ -1,48 +1,11 @@
-﻿@using Umbraco.Cms.Web.Common.PublishedModels;
+@using AutomotiveInfo.Models.Blocks
+@using Umbraco.Cms.Web.Common.PublishedModels;
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockGridItem<ContentModels.ImageWithTextBlock, ContentModels.BlockSettings>>
-@using Umbraco.Extensions
 @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
 
 @{
     if (Model.Settings?.HideBlockElement ?? false) { return; }
-
-    var textValue = Model.Content.Text; 
-    var image = Model.Content.Image;   
-    var position = Model.Content.ImagePosition ?? "Lewo";
-    var colSpan = Model.ColumnSpan;
-
-    // flexbox po opcji
-    var layoutClass = "md:flex-row"; // Domyślnie zdjęcie po lewej, tekst po prawej
-
-    if (position == "Prawo")
-    {
-        layoutClass = "md:flex-row-reverse"; // zdjecie prawo
-    }
-    else if (position == "Centruj")
-    {
-        layoutClass = "flex-col text-center"; // srodek
-    }
 }
-<div class="col-span-12 md:col-span-@colSpan">
-    <div class="flex flex-col @layoutClass gap-8 my-12 items-center">
-
-        @if (image != null)
-        {
-            // dla centruj ograniczenie maksymalnej szerokość zdjęcia, by ładnie wyglądało w pionie
-            var imageSizeClass = position == "Centruj" ? "max-w-2xl w-full" : "w-full md:w-1/2";
-
-            <div class="@imageSizeClass">
-                <img src="@image.Url()" alt="Zdjęcie komponentu" class="rounded-2xl w-full h-auto object-cover max-h-[450px] shadow-lg border border-slate-800/60" />
-            </div>
-        }
-
-        @if (textValue != null && !string.IsNullOrEmpty(textValue.ToString()))
-        {
-            var textSizeClass = position == "Centruj" ? "w-full" : "w-full md:w-1/2";
-
-            <div class="@textSizeClass prose prose-invert max-w-none text-white">
-                @textValue
-            </div>
-        }
-    </div>
+<div class="col-span-12 md:col-span-@Model.ColumnSpan">
+    @await Html.PartialAsync("components/_imageWithText", Model.Content.ToViewModel(Model.Settings))
 </div>

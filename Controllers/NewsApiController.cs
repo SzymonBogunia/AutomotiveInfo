@@ -1,53 +1,51 @@
-﻿using AutomotiveInfo.Models;
+using AutomotiveInfo.Models;
+using AutomotiveInfo.News;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
-using Umbraco.Cms.Core;
-using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.Web;
-using Umbraco.Extensions;
-using AutomotiveInfo.Caching;
 
 namespace AutomotiveInfo.Controllers;
 
+/// <summary>
+/// Public (website/headless) news endpoint. All querying, caching and culture rules
+/// live in <see cref="INewsArticleService"/>; this controller only owns HTTP concerns.
+/// </summary>
 [ApiController]
 [Route("api/v1/news")]
-public class NewsApiController : Controller
+public class NewsApiController : ControllerBase
 {
-    private readonly IPublishedContentQuery _contentQuery;
-    private readonly IUmbracoContextAccessor _umbracoContextAccessor;
-    private readonly IMemoryCache _cache;
+    private readonly INewsArticleService _newsArticleService;
 
-    private const string NewsListUrlSegment = "strona-aktualnosci";
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(10);
-
-    public NewsApiController(
-        IPublishedContentQuery contentQuery,
-        IUmbracoContextAccessor umbracoContextAccessor,
-        IMemoryCache cache)
+    public NewsApiController(INewsArticleService newsArticleService)
     {
-        _contentQuery = contentQuery;
-        _umbracoContextAccessor = umbracoContextAccessor;
-        _cache = cache;
+        _newsArticleService = newsArticleService;
     }
 
     [HttpGet("latest")]
     [ProducesResponseType(typeof(List<NewsArticleDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public IActionResult GetLatest([FromQuery] string? tag, [FromQuery] int count = 3)
+    public IActionResult GetLatest([FromQuery] string? tag, [FromQuery] int count = 3, [FromQuery] string? culture = null)
     {
         count = Math.Clamp(count, 1, 20);
 
-        var allArticles = _cache.GetOrCreate(NewsCacheKeys.AllArticles, entry =>
+        var resolvedCulture = _newsArticleService.ResolveCulture(culture);
+        if (resolvedCulture is null)
         {
-            entry.AbsoluteExpirationRelativeToNow = CacheDuration;
-            return LoadAllArticlesFromContent();
-        }) ?? new List<NewsArticleDto>();
-
-        if (allArticles.Count == 0)
-        {
+            // Unknown culture: reject instead of caching junk under an unbounded, user-supplied key.
             return Problem(
-                title: "Brak dostępnych artykułów",
-                detail: $"Nie znaleziono węzła listy aktualności o adresie '{NewsListUrlSegment}' albo nie ma pod nim żadnych artykułów.",
+                title: "Unknown culture",
+                detail: $"Culture '{culture}' is not configured for this site.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var allArticles = _newsArticleService.GetArticles(resolvedCulture);
+
+        if (allArticles is null)
+        {
+            // The news list node is missing entirely — a configuration problem,
+            // distinct from "the list exists but has no articles" (a valid 200 []).
+            return Problem(
+                title: "News list not found",
+                detail: "No published content of the news list document type exists.",
                 statusCode: StatusCodes.Status404NotFound);
         }
 
@@ -59,61 +57,6 @@ public class NewsApiController : Controller
                 string.Equals(a.Tag, tag, StringComparison.OrdinalIgnoreCase));
         }
 
-        var result = filtered.Take(count).ToList();
-
-        return Ok(result);
-    }
-
-    private List<NewsArticleDto> LoadAllArticlesFromContent()
-    {
-        var newsListPage = _contentQuery
-            .ContentAtRoot()
-            .SelectMany(root => root.DescendantsOrSelf<IPublishedContent>())
-            .FirstOrDefault(x => x.UrlSegment == NewsListUrlSegment);
-
-        if (newsListPage is null)
-        {
-            return new List<NewsArticleDto>();
-        }
-
-        return newsListPage
-            .Children()
-            .Where(x => x.ContentType.Alias == "newsPage")
-            .OrderByDescending(GetPublishDate)
-            .Select(MapToDto)
-            .ToList();
-    }
-
-    private static IEnumerable<IPublishedContent> GetPickerItems(IPublishedContent content, string alias)
-    {
-        var raw = content.Value(alias);
-        return raw switch
-        {
-            IEnumerable<IPublishedContent> multiple => multiple,
-            IPublishedContent single => new[] { single },
-            _ => Enumerable.Empty<IPublishedContent>()
-        };
-    }
-
-
-    private static DateTime GetPublishDate(IPublishedContent article)
-    {
-        var publishDate = article.Value<DateTime?>("publishDate");
-        return publishDate ?? article.CreateDate;
-    }
-
-    private static NewsArticleDto MapToDto(IPublishedContent article)
-    {
-        var firstTag = GetPickerItems(article, "tag").FirstOrDefault()?.Value<string>("tagName");
-        var image = GetPickerItems(article, "mainImage").FirstOrDefault();
-
-        return new NewsArticleDto
-        {
-            Title = article.Value<string>("articleTitle") ?? article.Name ?? string.Empty,
-            Url = article.Url(),
-            Date = GetPublishDate(article),
-            Tag = firstTag,
-            ImageUrl = image?.Url()
-        };
+        return Ok(filtered.Take(count).ToList());
     }
 }
