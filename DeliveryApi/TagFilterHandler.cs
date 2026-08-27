@@ -1,23 +1,36 @@
-﻿using Umbraco.Cms.Core;
+using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.DeliveryApi;
 using Umbraco.Cms.Core.Models;
-using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Core.Web;
+using Umbraco.Cms.Web.Common.PublishedModels;
+using TagModel = Umbraco.Cms.Web.Common.PublishedModels.Tag;
 
 namespace AutomotiveInfo.DeliveryApi;
 
+/// <summary>
+/// Adds tag filtering to the Delivery API: <c>?filter=tag:Premiera</c> (or several at once,
+/// <c>?filter=tag:Premiera,Wypadek</c>). Values are matched case-insensitively.
+/// No registration is needed — Umbraco discovers <c>IFilterHandler</c>/<c>IContentIndexHandler</c>
+/// implementations by type scanning (verified empirically). The one required operational step:
+/// the indexed <c>tagName</c> field only exists after the <c>DeliveryApiContentIndex</c> is
+/// rebuilt (Settings → Examine Management), per the official docs.
+/// </summary>
 public class TagFilterHandler : IFilterHandler, IContentIndexHandler
 {
     private const string TagSpecifier = "tag:";
     private const string FieldName = "tagName";
 
-    private readonly IContentService _contentService;
+    // Property alias of the (invariant) tag picker on the article document type.
+    private const string TagPropertyAlias = "tag";
 
-    public TagFilterHandler(IContentService contentService)
+    private readonly IUmbracoContextFactory _umbracoContextFactory;
+
+    public TagFilterHandler(IUmbracoContextFactory umbracoContextFactory)
     {
-        _contentService = contentService;
+        _umbracoContextFactory = umbracoContextFactory;
     }
 
-    // --- Querying: obsługa ?filter=tag:Premiera ---
+    // --- Querying: handles ?filter=tag:... ---
 
     public bool CanHandle(string query)
         => query.StartsWith(TagSpecifier, StringComparison.OrdinalIgnoreCase);
@@ -26,8 +39,13 @@ public class TagFilterHandler : IFilterHandler, IContentIndexHandler
     {
         var fieldValue = filter[TagSpecifier.Length..];
 
-        // Wiele tagów naraz: ?filter=tag:Premiera,Wypadek
-        var values = fieldValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        // Values are lowercased to match the lowercased index field, making the
+        // filter case-insensitive (?filter=tag:premiera == ?filter=tag:Premiera).
+        // An empty value list (?filter=tag:) deliberately matches nothing.
+        var values = fieldValue
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(v => v.ToLowerInvariant())
+            .ToArray();
 
         return new FilterOption
         {
@@ -37,6 +55,8 @@ public class TagFilterHandler : IFilterHandler, IContentIndexHandler
         };
     }
 
+    // --- Indexing: projects the article's tag names into the Delivery API index ---
+
     public IEnumerable<IndexField> GetFields()
         => new[]
         {
@@ -44,13 +64,14 @@ public class TagFilterHandler : IFilterHandler, IContentIndexHandler
             {
                 FieldName = FieldName,
                 FieldType = FieldType.StringRaw,
+                // The tag picker is invariant, so one value set serves every culture.
                 VariesByCulture = false
             }
         };
 
     public IEnumerable<IndexFieldValue> GetFieldValues(IContent content, string? culture)
     {
-        if (content.ContentType.Alias != "newsPage")
+        if (content.ContentType.Alias != NewsPage.ModelTypeAlias)
         {
             return Enumerable.Empty<IndexFieldValue>();
         }
@@ -74,8 +95,7 @@ public class TagFilterHandler : IFilterHandler, IContentIndexHandler
 
     private List<string> GetTagNames(IContent content)
     {
-
-        var rawValue = content.GetValue<string>("tag");
+        var rawValue = content.GetValue<string>(TagPropertyAlias);
 
         if (string.IsNullOrWhiteSpace(rawValue))
         {
@@ -84,6 +104,12 @@ public class TagFilterHandler : IFilterHandler, IContentIndexHandler
 
         var names = new List<string>();
 
+        // Index population can run outside an HTTP request, so an Umbraco context is
+        // ensured explicitly. Tag names are resolved from the published cache — the
+        // previous IContentService lookups were one SQL round-trip per tag, per article,
+        // per culture on every index rebuild.
+        using var contextReference = _umbracoContextFactory.EnsureUmbracoContext();
+
         foreach (var rawItem in rawValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             if (!UdiParser.TryParse(rawItem, out var udi) || udi is not GuidUdi guidUdi)
@@ -91,12 +117,12 @@ public class TagFilterHandler : IFilterHandler, IContentIndexHandler
                 continue;
             }
 
-            var tagContent = _contentService.GetById(guidUdi.Guid);
-            var tagName = tagContent?.GetValue<string>("tagName");
+            var tagName = (contextReference.UmbracoContext.Content?.GetById(guidUdi.Guid) as TagModel)?.TagName;
 
             if (!string.IsNullOrWhiteSpace(tagName))
             {
-                names.Add(tagName);
+                // Stored lowercased; BuildFilterOption lowercases the queried values to match.
+                names.Add(tagName.ToLowerInvariant());
             }
         }
 

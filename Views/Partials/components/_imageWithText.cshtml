@@ -1,0 +1,36 @@
+@using Umbraco.Extensions
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<AutomotiveInfo.Models.Blocks.ImageWithTextViewModel>
+
+@{
+    // Position is a canonical key ("left"/"center"/"right") — legacy Polish values
+    // are normalized in BlockViewModelFactory, so this view only ever sees keys.
+    var layoutClass = Model.Position switch
+    {
+        "right" => "md:flex-row-reverse",
+        "center" => "flex-col text-center",
+        _ => "md:flex-row",
+    };
+    var isCentered = Model.Position == "center";
+}
+
+<div id="@Model.Chrome.AnchorId"
+     style="@Model.Chrome.BackgroundStyle"
+     class="flex flex-col @layoutClass gap-8 items-center @Model.Chrome.SpacingClasses @Model.Chrome.BackgroundPaddingClasses">
+
+    @if (Model.Image is not null)
+    {
+        <div class="@(isCentered ? "max-w-2xl w-full" : "w-full md:w-1/2")">
+            <img src="@Model.Image.Url()"
+                 alt="@Model.Image.Name"
+                 loading="lazy"
+                 class="rounded-2xl w-full h-auto object-cover max-h-[450px] shadow-lg border border-slate-800/60" />
+        </div>
+    }
+
+    @if (Model.Text is not null && !string.IsNullOrEmpty(Model.Text.ToHtmlString()))
+    {
+        <div class="@(isCentered ? "w-full" : "w-full md:w-1/2") prose prose-invert max-w-none text-white">
+            @Model.Text
+        </div>
+    }
+</div>

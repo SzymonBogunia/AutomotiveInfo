@@ -7,6 +7,10 @@
 @{
     Layout = "_Layout.cshtml";
 
+    // articleTitle is mandatory on the document type — no node-name fallback needed.
+    var displayTitle = Model.ArticleTitle;
+    ViewBag.Title = displayTitle;
+
     var authorNode = Model.Author as ContentModels.Author;
 
     var tagNode = Model.Tag as ContentModels.Tag;
@@ -39,7 +43,7 @@
     </div>
 
     <h1 class="text-3xl md:text-5xl font-extrabold text-white mb-8 leading-tight">
-        @(string.IsNullOrEmpty(Model.ArticleTitle) ? Model.Name : Model.ArticleTitle)
+        @displayTitle
     </h1>
 
 
@@ -63,7 +67,7 @@
 
                 @* basic *@
                 <img src="@mainImage.GetCropUrl(width: 800, height: 333, imageCropMode: ImageCropMode.Crop)"
-                     alt="@(string.IsNullOrEmpty(Model.ArticleTitle) ? Model.Name : Model.ArticleTitle)"
+                     alt="@displayTitle"
                      loading="eager"
                      class="w-full h-auto block" />
             </picture>

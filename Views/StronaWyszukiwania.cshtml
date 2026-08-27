@@ -1,67 +1,171 @@
-﻿@using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
-@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<ContentModels.SearchPage>
-@inject AutomotiveInfo.Search.IArticleSearchService ArticleSearchService
+﻿@using Umbraco.Cms.Web.Common.PublishedModels
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<AutomotiveInfo.Search.SearchViewModel>
 
 @{
     Layout = "_Layout.cshtml";
 
-    string searchQuery = Context.Request.Query["q"].ToString().Trim();
-    int pageSize = 5;
-    int pageNumber = int.TryParse(Context.Request.Query["page"], out int p) && p > 0 ? p : 1;
+    // heading/lead come from the basePage composition (editor-controlled, per culture);
+    // heading is mandatory there, so the dictionary value is only a safety net.
+    var page = Model.Unwrap() as IBasePage;
+    var heading = string.IsNullOrWhiteSpace(page?.Heading)
+        ? Umbraco.GetDictionaryValueOrDefault("Search_Title", "Wyszukiwarka artykułów")
+        : page!.Heading;
+    var lead = page?.Lead;
 
-    var result = ArticleSearchService.Search(searchQuery, pageNumber, pageSize);
-    string encodedQuery = Uri.EscapeDataString(searchQuery);
+    ViewBag.Title = heading;
+
+    var results = Model.Results;
+    var encodedQuery = Uri.EscapeDataString(Model.Query);
+
+    string BuildUrl(string? tag, int page)
+    {
+        var url = $"{Model.Url()}?q={encodedQuery}";
+        if (!string.IsNullOrEmpty(tag))
+        {
+            url += $"&tag={Uri.EscapeDataString(tag)}";
+        }
+        return page > 1 ? url + $"&page={page}" : url;
+    }
+}
+
+@* Search result pages are an infinite, low-value crawl space — keep robots out. *@
+@section Head {
+    <meta name="robots" content="noindex" />
 }
 
 <div class="max-w-4xl mx-auto px-4 py-12 text-white">
-    <h1 class="text-3xl font-bold mb-8">@Umbraco.GetDictionaryValueOrDefault("Search_Title", "Wyszukiwarka artykułów")</h1>
+    <h1 class="text-3xl font-bold mb-3">@heading</h1>
 
-    <form action="@Model.Url()" method="get" class="mb-10 flex gap-4">
-        <input type="text" name="q" value="@searchQuery"
+    @if (!string.IsNullOrWhiteSpace(lead))
+    {
+        <p class="text-slate-400 mb-8">@lead</p>
+    }
+
+    <form action="@Model.Url()" method="get" role="search" class="mb-6 flex gap-4">
+        <label for="search-query" class="sr-only">@Umbraco.GetDictionaryValueOrDefault("Search_Placeholder", "Wpisz frazę lub tag...")</label>
+        <input type="search" id="search-query" name="q" value="@Model.Query"
                placeholder="@Umbraco.GetDictionaryValueOrDefault("Search_Placeholder", "Wpisz frazę lub tag...")"
                class="flex-1 bg-slate-900 text-white border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-red-500" />
+        @* Keep the active tag filter when submitting a new phrase. *@
+        @if (!string.IsNullOrEmpty(Model.Tag))
+        {
+            <input type="hidden" name="tag" value="@Model.Tag" />
+        }
         <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-3 rounded-lg transition-colors">
-            @Umbraco.GetDictionaryValueOrDefault("Search_SubmitButton", "Szukaj")  
+            @Umbraco.GetDictionaryValueOrDefault("Search_SubmitButton", "Szukaj")
         </button>
     </form>
 
-    @if (!string.IsNullOrWhiteSpace(searchQuery))
+    @* Tag facet: makes tags discoverable instead of requiring "#tag" syntax. *@
+    @if (Model.TagFacets.Any())
     {
-        <p class="text-slate-400 mb-6">@Html.Raw(string.Format(Umbraco.GetDictionaryValueOrDefault("Search_ResultsFoundPrefix", "Znaleziono {0} artykułów dla frazy:"), $"<strong>{result.TotalResults}</strong>")) <span class="text-white">"@searchQuery"</span></p>
+        <nav class="mb-10 flex flex-wrap items-center gap-2" aria-label="@Umbraco.GetDictionaryValueOrDefault("Search_FilterByTag", "Filtruj po tagu")">
+            <span class="text-xs uppercase tracking-wider text-slate-500 mr-1">@Umbraco.GetDictionaryValueOrDefault("Search_FilterByTag", "Filtruj po tagu")</span>
 
-        if (result.Items.Any())
+            @if (!string.IsNullOrEmpty(Model.Tag))
+            {
+                <a href="@BuildUrl(null, 1)" class="px-3 py-1 rounded-full text-xs font-semibold border border-slate-700 text-slate-300 hover:border-slate-500 transition-colors">
+                    × @Umbraco.GetDictionaryValueOrDefault("Search_ClearTag", "Wyczyść filtr")
+                </a>
+            }
+
+            @foreach (var facet in Model.TagFacets)
+            {
+                var isActive = string.Equals(facet.Name, Model.Tag, StringComparison.OrdinalIgnoreCase);
+                <a href="@BuildUrl(isActive ? null : facet.Name, 1)"
+                   aria-current="@(isActive ? "true" : null)"
+                   class="@(isActive
+                            ? "px-3 py-1 rounded-full text-xs font-semibold bg-red-600 text-white"
+                            : "px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors")">
+                    #@facet.Name <span class="opacity-60">@facet.Count</span>
+                </a>
+            }
+        </nav>
+    }
+
+    @if (results is not null)
+    {
+        <p class="text-slate-400 mb-6" role="status">
+            @string.Format(Umbraco.GetDictionaryValueOrDefault("Search_ResultsFoundPrefix", "Znaleziono {0} artykułów dla frazy:"), results.TotalResults)
+            @if (!string.IsNullOrEmpty(Model.Query))
+            {
+                <span class="text-white">"@Model.Query"</span>
+            }
+            @if (!string.IsNullOrEmpty(Model.Tag))
+            {
+                <span class="text-red-400">#@Model.Tag</span>
+            }
+        </p>
+
+        if (results.Items.Any())
         {
             <div class="space-y-6">
-                @foreach (var article in result.Items)
+                @foreach (var hit in results.Items)
                 {
-                    string title = article.HasValue("articleTitle") ? article.Value<string>("articleTitle")!
-                    : article.HasValue("title") ? article.Value<string>("title")!
-                    : article.Name!;
-
                     <article class="bg-slate-900 border border-slate-800 rounded-xl p-6 transition hover:border-slate-700">
-                        <h2 class="text-xl font-bold mb-2">
-                            <a href="@article.Url()" class="hover:text-red-500 transition-colors">@title</a>
+                        <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500 mb-2">
+                            <time datetime="@hit.PublishDate.ToString("yyyy-MM-dd")">@hit.PublishDate.ToString("d")</time>
+                            @if (!string.IsNullOrEmpty(hit.TagName))
+                            {
+                                <span class="px-2 py-0.5 rounded-full font-semibold bg-red-500/10 text-red-400 border border-red-500/20">#@hit.TagName</span>
+                            }
+                        </div>
+                        <h2 class="text-xl font-bold mb-3">
+                            <a href="@hit.Url" class="hover:text-red-500 transition-colors">@hit.Title</a>
                         </h2>
-                        @if (article.HasValue("lead") || article.HasValue("summary"))
-                        {
-                            <p class="text-slate-400 text-sm mb-3">
-                                @(article.HasValue("lead") ? article.Value("lead") : article.Value("summary"))
-                            </p>
-                        }
-                        <a href="@article.Url()" class="text-red-500 hover:underline text-sm font-semibold">@Umbraco.GetDictionaryValueOrDefault("Search_ReadArticle", "Czytaj artykuł →")</a>
+                        <a href="@hit.Url" class="text-red-500 hover:underline text-sm font-semibold">@Umbraco.GetDictionaryValueOrDefault("Search_ReadArticle", "Czytaj artykuł →")</a>
                     </article>
                 }
             </div>
 
-            if (result.TotalPages > 1)
+            if (results.TotalPages > 1)
             {
-                <div class="flex gap-2 mt-8 justify-center">
-                    @for (int i = 1; i <= result.TotalPages; i++)
+                var current = results.PageNumber;
+                var total = results.TotalPages;
+                var windowStart = Math.Max(1, current - 2);
+                var windowEnd = Math.Min(total, current + 2);
+
+                <nav class="flex flex-wrap gap-2 mt-8 justify-center items-center" aria-label="Pagination">
+                    @if (current > 1)
                     {
-                        var activeClass = i == pageNumber ? "bg-red-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700";
-                        <a href="@Model.Url()?q=@encodedQuery&page=@i" class="px-4 py-2 rounded-lg font-medium @activeClass">@i</a>
+                        <a href="@BuildUrl(Model.Tag, current - 1)" rel="prev" aria-label="«" class="px-4 py-2 rounded-lg font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">«</a>
                     }
-                </div>
+
+                    @if (windowStart > 1)
+                    {
+                        <a href="@BuildUrl(Model.Tag, 1)" class="px-4 py-2 rounded-lg font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">1</a>
+                        @if (windowStart > 2)
+                        {
+                            <span class="px-2 text-slate-500" aria-hidden="true">…</span>
+                        }
+                    }
+
+                    @for (var i = windowStart; i <= windowEnd; i++)
+                    {
+                        if (i == current)
+                        {
+                            <span aria-current="page" class="px-4 py-2 rounded-lg font-medium bg-red-600 text-white">@i</span>
+                        }
+                        else
+                        {
+                            <a href="@BuildUrl(Model.Tag, i)" class="px-4 py-2 rounded-lg font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">@i</a>
+                        }
+                    }
+
+                    @if (windowEnd < total)
+                    {
+                        @if (windowEnd < total - 1)
+                        {
+                            <span class="px-2 text-slate-500" aria-hidden="true">…</span>
+                        }
+                        <a href="@BuildUrl(Model.Tag, total)" class="px-4 py-2 rounded-lg font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">@total</a>
+                    }
+
+                    @if (current < total)
+                    {
+                        <a href="@BuildUrl(Model.Tag, current + 1)" rel="next" aria-label="»" class="px-4 py-2 rounded-lg font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">»</a>
+                    }
+                </nav>
             }
         }
         else
