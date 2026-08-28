@@ -42,24 +42,16 @@
     <div id="app"><div class="state">Ładowanie…</div></div>
 
     <script>
-        const API_BASE = "https://localhost:44328/umbraco/delivery/api/v2/content";
-        const app = document.getElementById("app");
-        const API_KEY = "e8afdc8d-7a3e-445a-95ae-25b43c31b4e5";
+        const API_BASE = "/api/demo/news";
 
         async function fetchList() {
-            const res = await fetch(
-                `${API_BASE}?filter=contentType:newsPage&sort=createDate:desc&take=20`,
-                { headers: { "Accept-Language": "pl-PL", "Api-Key": API_KEY } }
-            );
+            const res = await fetch(`${API_BASE}?take=20`);
             if (!res.ok) throw new Error(`API error: ${res.status}`);
             return res.json();
         }
 
         async function fetchDetail(id) {
-            const res = await fetch(
-                `${API_BASE}/item/${id}?expand=properties[$all]`,
-                { headers: { "Accept-Language": "pl-PL", "Api-Key": API_KEY } }
-            );
+            const res = await fetch(`${API_BASE}/${id}`);
             if (!res.ok) throw new Error(`API error: ${res.status}`);
             return res.json();
         }
