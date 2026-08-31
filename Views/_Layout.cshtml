@@ -67,7 +67,7 @@
         <link rel="alternate" hreflang="x-default" href="@currentContent.Url(culture: DefaultCultureAccessor.DefaultCulture, mode: UrlMode.Absolute)" />
     }
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="~/dist/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Head", required: false)
 </head>
 <body class="bg-slate-900 text-slate-100 flex flex-col min-h-screen">

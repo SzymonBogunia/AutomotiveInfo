@@ -81,6 +81,19 @@ To generuje `App_Plugins/EditorialStatsDashboard/dist/editorial-stats-dashboard.
 
 **Cache manifestu:** backoffice cache'uje `umbraco-package.json` (~10s w trybie dev). Po zmianach w dashboardzie odśwież backoffice (F5).
 
+### 1.5 Zbuduj arkusz stylów strony (Tailwind)
+
+Style strony publicznej to osobny pakiet frontendowy budowany przez Vite — **nie jest częścią `dotnet build`**, tak samo jak dashboard w kroku 1.4.
+
+```powershell
+cd Client/Frontend
+npm install
+npm run build
+cd ../..
+```
+
+To generuje `wwwroot/dist/site.css`, który `_Layout.cshtml` ładuje bezpośrednio (bez CDN). Bez tego kroku strona wystartuje, ale będzie bez stylów. Podczas developmentu użyj `npm run dev` zamiast `npm run build` — przebudowuje CSS przy każdym zapisie (bez live-reloadu w przeglądarce, trzeba odświeżyć ręcznie).
+
 ---
 
 ## 2. Logowanie do backoffice
@@ -157,6 +170,9 @@ Wszystkie stringi UI (nawigacja, etykiety) pochodzą z **Dictionary** (Settings 
 
 ```
 AutomotiveInfo/
+├── wwwroot/
+│   └── dist/
+│       └── site.css              ← build output stylów (generowany, patrz krok 1.5)
 ├── Controllers/              ← customowe kontrolery API (NewsApiController, DemoProxyController, SearchPageController)
 ├── Composers/                ← rejestracje DI per zagadnienie (IComposer, auto-discoverowane)
 ├── Models/                   ← DTO (NewsArticleDto itd.)
@@ -166,6 +182,7 @@ AutomotiveInfo/
 │       └── dist/             ← build output dashboardu (generowany, patrz krok 1.4)
 ├── Client/
 │   └── EditorialStatsDashboard/   ← źródła TS/Lit dashboardu, build przez Vite
+│   └── Frontend/                  ← źródła Tailwind CSS strony publicznej, build przez Vite
 ├── uSync/                    ← wyeksportowany schemat treści (auto-import przy starcie)
 └── appsettings.json           ← config z placeholderami; prawdziwe wartości w user-secrets
 ```

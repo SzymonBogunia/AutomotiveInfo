@@ -1,0 +1,9 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* @source paths are relative to THIS file (Client/Frontend/src/site.css),
+   so it's 3 levels up to the project root: src -> Frontend -> Client -> root.
+   Skip the Models line and BlockChrome's literal spacing classes get purged
+   even though they're 100% literal (verified by building both ways). */
+@source "../../../Views/**/*.cshtml";
+@source "../../../Models/**/*.cs";
