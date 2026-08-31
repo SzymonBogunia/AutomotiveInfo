@@ -2,44 +2,339 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AutomotiveInfo — Headless Demo</title>
     <style>
+        :root {
+            --bg: #020617;
+            --surface: #0f172a;
+            --border: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-faint: #64748b;
+            --accent: #ef4444;
+            --accent-hover: #f87171;
+            --accent-wash: rgba(239, 68, 68, 0.08);
+            --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: system-ui, sans-serif;
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 0 16px;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-sans);
+            line-height: 1.6;
         }
 
-        .article-card {
-            border-bottom: 1px solid #ddd;
-            padding: 16px 0;
-            cursor: pointer;
+        a {
+            color: inherit;
+            text-decoration: none;
         }
 
-            .article-card h2 {
-                margin: 0 0 4px;
+            a:focus-visible,
+            .article-row:focus-visible {
+                outline: 2px solid var(--accent);
+                outline-offset: 2px;
             }
 
-            .article-card time {
-                color: #888;
-                font-size: 0.9em;
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .topbar-inner {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .brand {
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            font-size: 1.05rem;
+        }
+
+            .brand .accent {
+                color: var(--accent);
             }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-faint);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.25rem 0.55rem;
+            white-space: nowrap;
+        }
+
+            .badge .dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: var(--accent);
+            }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .badge .dot {
+                animation: pulse 2s ease-in-out infinite;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.35;
+            }
+        }
+
+        main {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 2.5rem 1.25rem 4rem;
+        }
+
+        h1.page-title {
+            font-size: 1.9rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            margin: 0 0 0.35rem;
+        }
+
+        .page-subtitle {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text-faint);
+            margin: 0 0 2rem;
+        }
+
+        .article-list {
+            display: block;
+        }
+
+        .article-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 1.5rem;
+            padding: 1.15rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+            .article-row h2 {
+                margin: 0;
+                font-size: 1.05rem;
+                font-weight: 600;
+                transition: color 0.15s ease;
+            }
+
+            .article-row:hover h2,
+            .article-row:focus-visible h2 {
+                color: var(--accent-hover);
+            }
+
+            .article-row time {
+                flex-shrink: 0;
+                font-family: var(--font-mono);
+                font-size: 0.75rem;
+                color: var(--text-faint);
+            }
+
+        .back-link {
+            display: inline-block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            transition: color 0.15s ease;
+        }
+
+            .back-link:hover, .back-link:focus-visible {
+                color: var(--accent-hover);
+            }
+
+        article h1 {
+            font-size: 1.8rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            line-height: 1.25;
+            margin: 0 0 0.9rem;
+        }
+
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .pill {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--accent-hover);
+            background: var(--accent-wash);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 999px;
+            padding: 0.25rem 0.65rem;
+        }
+
+            .pill.neutral {
+                color: var(--text-muted);
+                background: transparent;
+                border-color: var(--border);
+            }
+
+        .block {
+            max-width: 100ch;
+        }
+
+            .block + .block {
+                margin-top: 2rem;
+            }
+
+        .block-text p {
+            margin: 0 0 1.1rem;
+            color: #e2e8f0;
+        }
+
+            .block-text p:last-child {
+                margin-bottom: 0;
+            }
+
+        .block-text h2, .block-text h3 {
+            font-weight: 700;
+            margin: 1.75rem 0 0.75rem;
+        }
+
+        .block-text a {
+            color: var(--accent-hover);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .block-text ul, .block-text ol {
+            padding-left: 1.25rem;
+            color: #e2e8f0;
+        }
+
+        .block-image-text img {
+            width: 100%;
+            max-width: 78ch;
+            height: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .hero-image {
+            width: 100%;
+            max-height: 360px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+            display: block;
+        }
 
         .state {
-            color: #888;
-            padding: 40px 0;
+            padding: 3rem 0;
             text-align: center;
+            color: var(--text-faint);
         }
 
-        a.back {
-            display: inline-block;
-            margin-bottom: 16px;
+        .skeleton-row {
+            padding: 1.15rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .skeleton-bar {
+            height: 0.9rem;
+            border-radius: 4px;
+            background: var(--surface);
+        }
+
+            .skeleton-bar.title {
+                width: 60%;
+                margin-bottom: 0.5rem;
+            }
+
+            .skeleton-bar.meta {
+                width: 25%;
+                height: 0.65rem;
+            }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .skeleton-bar {
+                animation: pulse 1.4s ease-in-out infinite;
+            }
+        }
+
+        .error-box {
+            border-left: 3px solid var(--accent);
+            border-radius: 0;
+            background: var(--accent-wash);
+            padding: 1rem 1.25rem;
+        }
+
+            .error-box p {
+                margin: 0 0 0.5rem;
+            }
+
+            .error-box code {
+                display: block;
+                font-family: var(--font-mono);
+                font-size: 0.75rem;
+                color: var(--text-faint);
+            }
+
+        @media (max-width: 480px) {
+            .topbar-inner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.6rem;
+            }
+
+            h1.page-title {
+                font-size: 1.6rem;
+            }
+
+            article h1 {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="app"><div class="state">Ładowanie…</div></div>
+    <div class="topbar">
+        <div class="topbar-inner">
+            <span class="brand">AUTOMOTIVE<span class="accent">INFO</span></span>
+            <span class="badge"><span class="dot"></span>headless demo · Delivery API</span>
+        </div>
+    </div>
+
+    <main id="app">
+        <div class="skeleton-row"><div class="skeleton-bar title"></div><div class="skeleton-bar meta"></div></div>
+        <div class="skeleton-row"><div class="skeleton-bar title"></div><div class="skeleton-bar meta"></div></div>
+        <div class="skeleton-row"><div class="skeleton-bar title"></div><div class="skeleton-bar meta"></div></div>
+    </main>
 
     <script>
         const API_BASE = "/api/demo/news";
@@ -58,23 +353,21 @@
 
         function renderList(items) {
             if (!items.length) {
-                app.innerHTML = `<div class="state">Brak artykułów do wyświetlenia.</div>`;
+                app.innerHTML = `<div class="state">Brak opublikowanych artykułów.</div>`;
                 return;
             }
             app.innerHTML = `
-        <h1>AutomotiveInfo — Artykuły</h1>
-        ${items.map(item => `
-          <div class="article-card" data-id="${item.id}">
-            <h2>${item.name}</h2>
-            <time>${new Date(item.properties?.createDate ?? item.createDate ?? Date.now()).toLocaleDateString("pl-PL")}</time>
-          </div>
-        `).join("")}
-      `;
-            document.querySelectorAll(".article-card").forEach(card => {
-                card.addEventListener("click", () => {
-                    location.hash = `#/article/${card.dataset.id}`;
-                });
-            });
+            <h1 class="page-title">Artykuły</h1>
+            <p class="page-subtitle">GET ${API_BASE}?take=20</p>
+            <div class="article-list">
+              ${items.map(item => `
+                <a class="article-row" href="#/article/${item.id}">
+                  <h2>${item.name}</h2>
+                  <time>${new Date(item.properties?.createDate ?? item.createDate ?? Date.now()).toLocaleDateString("pl-PL")}</time>
+                </a>
+              `).join("")}
+            </div>
+          `;
         }
 
         function getRichTextWithReadingTime(prop) {
@@ -103,7 +396,7 @@
                 case "richTextBlock": {
                     const { markup, readingTimeMinutes } = getRichTextWithReadingTime(properties.componentText);
                     const readingTimeHtml = readingTimeMinutes
-                        ? `<p class="reading-time">⏱ ${readingTimeMinutes} min czytania</p>`
+                        ? `<div class="meta-row"><span class="pill neutral">${readingTimeMinutes} min czytania</span></div>`
                         : "";
                     return `<div class="block block-text">${readingTimeHtml}${markup}</div>`;
                 }
@@ -111,15 +404,15 @@
                 case "imageWithTextBlock": {
                     const img = properties.image?.[0];
                     const imgHtml = img
-                        ? `<img src="${img.url}" alt="${img.name ?? ""}" style="max-width:100%">`
+                        ? `<img src="${img.url}" alt="${img.name ?? ""}">`
                         : "";
                     // properties.text to zwykły rich text bez konwertera — zostaje getRichText
                     return `
-                <div class="block block-image-text">
-                    ${imgHtml}
-                    <div>${getRichText(properties.text)}</div>
-                </div>
-            `;
+                    <div class="block block-image-text">
+                        ${imgHtml}
+                        <div>${getRichText(properties.text)}</div>
+                    </div>
+                `;
                 }
 
                 default:
@@ -128,31 +421,55 @@
         }
 
         function renderDetail(item) {
-            const blockList = item.properties?.components?.items ?? []; 
+            const blockList = item.properties?.components?.items ?? [];
             const contentHtml = blockList.length
                 ? blockList.map(renderBlock).join("")
                 : "<p>(brak treści)</p>";
+            const date = new Date(item.properties?.createDate ?? item.createDate ?? Date.now()).toLocaleDateString("pl-PL");
+
+            // mainImage ma ten sam kształt co image w imageWithTextBlock: tablica,
+            // pusta/undefined gdy artykuł nie ma zdjęcia głównego.
+            const mainImage = item.properties?.mainImage?.[0];
+            const heroHtml = mainImage
+                ? `<img class="hero-image" src="${mainImage.url}" alt="${mainImage.name ?? item.name}">`
+                : "";
 
             app.innerHTML = `
-    <a href="#/" class="back">← Wróć do listy</a>
-    <h1>${item.name}</h1>
-    ${contentHtml}
-  `;
+        <a href="#/" class="back-link">← Wróć do listy</a>
+        <article>
+          <h1>${item.name}</h1>
+          <div class="meta-row"><span class="pill">${date}</span></div>
+          ${heroHtml}
+          ${contentHtml}
+        </article>
+      `;
         }
 
         function renderError(err) {
-            app.innerHTML = `<div class="state">Błąd: ${err.message}</div>`;
+            app.innerHTML = `
+            <div class="error-box">
+              <p>Nie udało się wczytać danych.</p>
+              <code>${err.message}</code>
+            </div>
+          `;
+        }
+
+        function renderListSkeleton() {
+            app.innerHTML = Array.from({ length: 3 }, () => `
+            <div class="skeleton-row"><div class="skeleton-bar title"></div><div class="skeleton-bar meta"></div></div>
+          `).join("");
         }
 
         async function route() {
-            app.innerHTML = `<div class="state">Ładowanie…</div>`;
             const hash = location.hash;
             try {
                 if (hash.startsWith("#/article/")) {
+                    app.innerHTML = `<div class="state">Wczytywanie artykułu…</div>`;
                     const id = hash.replace("#/article/", "");
                     const item = await fetchDetail(id);
                     renderDetail(item);
                 } else {
+                    renderListSkeleton();
                     const data = await fetchList();
                     renderList(data.items ?? []);
                 }
