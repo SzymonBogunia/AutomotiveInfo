@@ -66,22 +66,10 @@ dotnet run
 
 Aplikacja startuje na `https://localhost:44328`. Przy pierwszym uruchomieniu Umbraco automatycznie zaimportuje strukturę treści z uSync (`ImportAtStartup`).
 
-### 1.4 Zbuduj dashboard redakcyjny (wymagane przed publikacją / dla pełnego backoffice)
-
-Dashboard w sekcji Content backoffice ("Editorial Stats") to osobny pakiet frontendowy budowany przez Vite — **nie jest częścią `dotnet build`**.
-
-```powershell
-cd Client/EditorialStatsDashboard
-npm install
-npm run build
-cd ../..
-```
-
-To generuje `App_Plugins/EditorialStatsDashboard/dist/editorial-stats-dashboard.js`, który backoffice ładuje przy starcie. Podczas developmentu użyj `npm run watch` zamiast `npm run build` dla auto-rebuildu.
 
 **Cache manifestu:** backoffice cache'uje `umbraco-package.json` (~10s w trybie dev). Po zmianach w dashboardzie odśwież backoffice (F5).
 
-### 1.5 Zbuduj arkusz stylów strony (Tailwind)
+### 1.4 Zbuduj arkusz stylów strony (Tailwind)
 
 Style strony publicznej to osobny pakiet frontendowy budowany przez Vite — **nie jest częścią `dotnet build`**, tak samo jak dashboard w kroku 1.4.
 
