@@ -8,7 +8,7 @@ Zainstaluj i zweryfikuj **przed** klonowaniem repo:
 
 | Narzędzie | Wersja | Weryfikacja |
 |---|---|---|
-| .NET SDK | 9.x | `dotnet --version` |
+| .NET SDK | 10.x | `dotnet --version` |
 | Node.js | ≥ 22.15.0 (LTS) | `node -v` |
 | npm | dołączony do Node | `npm -v` |
 | SQL Server | LocalDB / Express / pełny | — |
@@ -160,19 +160,19 @@ Wszystkie stringi UI (nawigacja, etykiety) pochodzą z **Dictionary** (Settings 
 AutomotiveInfo/
 ├── wwwroot/
 │   └── dist/
-│       └── site.css              ← build output stylów (generowany, patrz krok 1.5)
+│       └── site.css          ← build output stylów (generowany, patrz krok 1.5)
 ├── Controllers/              ← customowe kontrolery API (NewsApiController, DemoProxyController, SearchPageController)
 ├── Composers/                ← rejestracje DI per zagadnienie (IComposer, auto-discoverowane)
 ├── Models/                   ← DTO (NewsArticleDto itd.)
 ├── Views/                    ← Razor views
 ├── App_Plugins/
-│   └── EditorialStatsDashboard/
+│   └── AutomotiveInfo/
 │       └── dist/             ← build output dashboardu (generowany, patrz krok 1.4)
 ├── Client/
-│   └── EditorialStatsDashboard/   ← źródła TS/Lit dashboardu, build przez Vite
-│   └── Frontend/                  ← źródła Tailwind CSS strony publicznej, build przez Vite
+│   └── AutomotiveInfo/		  ← źródła TS/Lit dashboardu, build przez Vite
+│   └── Frontend/             ← źródła Tailwind CSS strony publicznej, build przez Vite
 ├── uSync/                    ← wyeksportowany schemat treści (auto-import przy starcie)
-└── appsettings.json           ← config z placeholderami; prawdziwe wartości w user-secrets
+└── appsettings.json          ← config z placeholderami; prawdziwe wartości w user-secrets
 ```
 
 ---
